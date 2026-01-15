@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="JMBAJ7" name="FourierSynth" projectType="audioplug" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" pluginFormats="buildStandalone,buildVST3"
+              companyName="E_Rhari" companyCopyright="Creative Common" companyEmail="evandrorhari@gmail.com"
+              pluginCharacteristicsValue="pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn"
+              cppLanguageStandard="20">
   <MAINGROUP id="UZCo9Y" name="FourierSynth">
     <GROUP id="{5000D77F-865A-48BE-ABD5-E4FCD75056E2}" name="Source">
+      <FILE id="TOEje4" name="FourierSynth.h" compile="0" resource="0" file="Source/FourierSynth.h"/>
       <FILE id="Q5QwyN" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="IqvMTf" name="PluginProcessor.h" compile="0" resource="0"
