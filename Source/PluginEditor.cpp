@@ -1,40 +1,28 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin editor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//==============================================================================
-FourierSynthAudioProcessorEditor::FourierSynthAudioProcessorEditor (FourierSynthAudioProcessor& p)
+FourierSynthEditor::FourierSynthEditor (FourierSynthProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
+    // Para evitar warnings
+    juce::ignoreUnused(audioProcessor);
+    
+    // Define o tamanho do editor
     setSize (400, 300);
 }
 
-FourierSynthAudioProcessorEditor::~FourierSynthAudioProcessorEditor()
-{
-}
+FourierSynthEditor::~FourierSynthEditor() {}
 
-//==============================================================================
-void FourierSynthAudioProcessorEditor::paint (juce::Graphics& g)
+void FourierSynthEditor::paint (juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
+    // Preenche a tela com uma cor solida
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
     g.setColour (juce::Colours::white);
-    g.setFont (juce::FontOptions (15.0f));
-    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+    g.setFont (15.0f);
+
+    // TODO: Define nome do plugin na tela. Aqui usamos "Plugin" apenas
+    g.drawFittedText ("Plugin", getLocalBounds(), juce::Justification::centred, 1);
 }
 
-void FourierSynthAudioProcessorEditor::resized()
-{
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
-}
+// Funcao em que sao definidas posicoes customizadas dos elementos
+void FourierSynthEditor::resized() {}

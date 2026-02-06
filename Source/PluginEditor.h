@@ -1,33 +1,22 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin editor.
-
-  ==============================================================================
-*/
+//==============================================================================
+// PluginEditor.h: definicao do PluginEditor
+//==============================================================================
 
 #pragma once
 
-#include <JuceHeader.h>
 #include "PluginProcessor.h"
 
-//==============================================================================
-/**
-*/
-class FourierSynthAudioProcessorEditor  : public juce::AudioProcessorEditor
+class FourierSynthEditor : public juce::AudioProcessorEditor
 {
 public:
-    FourierSynthAudioProcessorEditor (FourierSynthAudioProcessor&);
-    ~FourierSynthAudioProcessorEditor() override;
+    FourierSynthEditor (FourierSynthProcessor&);
+    ~FourierSynthEditor() override;
 
-    //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
-    FourierSynthAudioProcessor& audioProcessor;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FourierSynthAudioProcessorEditor)
+    // Referencia para o editor acessar o objeto MyAudioProcessor que o criou
+    FourierSynthProcessor& audioProcessor;
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FourierSynthEditor)
 };

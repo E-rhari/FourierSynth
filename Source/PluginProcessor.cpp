@@ -1,180 +1,129 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Common.h"
+
+// TODO: Quantidade de parametros
+const long unsigned int NUM_PARAMS = 1;
 
 //==============================================================================
-FourierSynthAudioProcessor::FourierSynthAudioProcessor()
-#ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
-                       .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                      #endif
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                     #endif
-                       )
-#endif
+// Construtor e destrutor
+//------------------------------------------------------------------------------
+FourierSynthProcessor::FourierSynthProcessor()
+    : AudioProcessor (BusesProperties()
+        //TODO: Define se plugin mono ou stereo
+        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
+        .withOutput ("Output", juce::AudioChannelSet::stereo(), true))
 {
+    //TODO: inicializacao dos parametros do plugin
+    gain_ = 1.0f;
+
+    castParameter(apvts, ParamID::gain, gainParam);
+    apvts.state.addListener(this);
+    
+    createPrograms();
+    setCurrentProgram(0);
 }
 
-FourierSynthAudioProcessor::~FourierSynthAudioProcessor()
+FourierSynthProcessor::~FourierSynthProcessor() 
 {
+    apvts.state.removeListener(this);
 }
+//==============================================================================
 
 //==============================================================================
-const juce::String FourierSynthAudioProcessor::getName() const
-{
-    return JucePlugin_Name;
+// Funcoes de processamento de audio
+//------------------------------------------------------------------------------
+
+// TODO: funcao que roda logo ANTES de começar a processar
+void FourierSynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) {
+     juce::ignoreUnused(sampleRate, samplesPerBlock); 
 }
 
-bool FourierSynthAudioProcessor::acceptsMidi() const
+// TODO: funcao que processa audio em loop - AUDIO THREAD!!!
+void FourierSynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-   #if JucePlugin_WantsMidiInput
-    return true;
-   #else
-    return false;
-   #endif
+    //ignora mensagens MIDI
+    juce::ignoreUnused(midiMessages);
+
+    //loop pelos canais (plugin stereo)
+    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+    {
+        //ponteiro para canal
+        auto* channelData = buffer.getWritePointer(channel);
+        
+        //loop pelas amostras de audio no buffer
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            channelData[sample] *= gain_;
+        }
+    }
+
+    //variavel parametersChanged muda pelo evento valueTreePropertyChanged que executa na thread de UI
+    bool expected = true;
+    if (parametersChanged.compare_exchange_strong(expected, false)) {
+        update();
+    }
 }
 
-bool FourierSynthAudioProcessor::producesMidi() const
-{
-   #if JucePlugin_ProducesMidiOutput
-    return true;
-   #else
-    return false;
-   #endif
-}
+// chamada logo DEPOIS de processar
+void FourierSynthProcessor::releaseResources() {}
 
-bool FourierSynthAudioProcessor::isMidiEffect() const
-{
-   #if JucePlugin_IsMidiEffect
-    return true;
-   #else
-    return false;
-   #endif
-}
+// TODO: atualiza parametros - AUDIO THREAD!!!
+void FourierSynthProcessor::update() {
+    smoother.setCurrentAndTargetValue(gainParam->get());
 
-double FourierSynthAudioProcessor::getTailLengthSeconds() const
-{
-    return 0.0;
-}
+    gain_ = gainParam->get();
 
-int FourierSynthAudioProcessor::getNumPrograms()
-{
-    return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
-                // so this should be at least 1, even if you're not really implementing programs.
-}
-
-int FourierSynthAudioProcessor::getCurrentProgram()
-{
-    return 0;
-}
-
-void FourierSynthAudioProcessor::setCurrentProgram (int index)
-{
-}
-
-const juce::String FourierSynthAudioProcessor::getProgramName (int index)
-{
-    return {};
-}
-
-void FourierSynthAudioProcessor::changeProgramName (int index, const juce::String& newName)
-{
+    // exemplo de debug de parametro na console (precisa compilar em modo debug)  
+    std::stringstream ss;
+    ss << "gain: " << gain_;
+    DBG(ss.str()); //print na console para debug rapido
 }
 
 //==============================================================================
-void FourierSynthAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+// Gestao de parametros
+//------------------------------------------------------------------------------
+// TODO: Cria parametros e adiciona em layout
+juce::AudioProcessorValueTreeState::ParameterLayout FourierSynthProcessor::createParameterLayout()
 {
-    synth.prepareToPlay(sampleRate, samplesPerBlock);
-}
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-void FourierSynthAudioProcessor::releaseResources()
-{
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
-}
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        ParamID::gain,
+        "Gain",
+        juce::NormalisableRange(0.0f, 2.0f),
+        1.0f));
 
-#ifndef JucePlugin_PreferredChannelConfigurations
-bool FourierSynthAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
-{
-  #if JucePlugin_IsMidiEffect
-    juce::ignoreUnused (layouts);
-    return true;
-  #else
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
-    // Some plugin hosts, such as certain GarageBand versions, will only
-    // load plugins that support stereo bus layouts.
-    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-     && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
-        return false;
-
-    // This checks if the input layout matches the output layout
-   #if ! JucePlugin_IsSynth
-    if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
-        return false;
-   #endif
-
-    return true;
-  #endif
-}
-#endif
-
-void FourierSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
-{
-    juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
-
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
-
-    //for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    //{
-    //    auto* channelData = buffer.getWritePointer (channel);
-
-    //    // ..do something to the data...
-    //}
-
-    synth.processBlock(buffer, midiMessages);
+    return layout;
 }
 
 //==============================================================================
-bool FourierSynthAudioProcessor::hasEditor() const
+// Gestao de presets (somente funcoes que variam por plugin. Ver Common.h)
+//------------------------------------------------------------------------------
+
+// TODO: Cria presets iniciais
+void FourierSynthProcessor::createPrograms()
 {
-    return true; // (change this to false if you choose to not supply an editor)
+    presets.emplace_back(Preset("unity gain", {1.0f}));
+    presets.emplace_back(Preset("double gain", {2.0f}));
 }
 
-juce::AudioProcessorEditor* FourierSynthAudioProcessor::createEditor()
+// TODO: Define preset atual
+void FourierSynthProcessor::setCurrentProgram (int index)
 {
-    return new FourierSynthAudioProcessorEditor (*this);
-}
+    currentProgram = index;
+    
+    juce::RangedAudioParameter* params[NUM_PARAMS] = {
+        gainParam
+    };
 
+    const Preset& preset = presets[(unsigned int)index];
+
+    for (long unsigned int i = 0; i < NUM_PARAMS; ++i)
+    {
+        params[i]->setValueNotifyingHost(params[i]->convertTo0to1(preset.param[i]));
+    }
+    
+    reset();
+}
 //==============================================================================
-void FourierSynthAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
-{
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
-}
-
-void FourierSynthAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
-{
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
-}
-
-//==============================================================================
-// This creates new instances of the plugin..
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
-{
-    return new FourierSynthAudioProcessor();
-}
