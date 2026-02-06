@@ -36,7 +36,10 @@ FourierSynthProcessor::~FourierSynthProcessor()
 
 // TODO: funcao que roda logo ANTES de começar a processar
 void FourierSynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) {
-     juce::ignoreUnused(sampleRate, samplesPerBlock); 
+     juce::ignoreUnused(samplesPerBlock); 
+     
+     currentSampleRate = sampleRate;
+     updateDeltaAngle();
 }
 
 // TODO: funcao que processa audio em loop - AUDIO THREAD!!!
@@ -46,16 +49,19 @@ void FourierSynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
     juce::ignoreUnused(midiMessages);
 
     //loop pelos canais (plugin stereo)
-    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+
+    //ponteiro para canal
+    auto* channelDataLeft  = buffer.getWritePointer(0);
+    auto* channelDataRight = buffer.getWritePointer(1);
+    
+    //loop pelas amostras de audio no buffer
+    for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
     {
-        //ponteiro para canal
-        auto* channelData = buffer.getWritePointer(channel);
-        
-        //loop pelas amostras de audio no buffer
-        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-        {
-            channelData[sample] *= gain_;
-        }
+        double sampleValue = sin(currentAngle) * gain_;
+        channelDataLeft[sample] = sampleValue;
+        channelDataRight[sample] = sampleValue;
+
+        currentAngle += deltaAngle;
     }
 
     //variavel parametersChanged muda pelo evento valueTreePropertyChanged que executa na thread de UI
@@ -126,4 +132,10 @@ void FourierSynthProcessor::setCurrentProgram (int index)
     
     reset();
 }
+
 //==============================================================================
+// Cálculos matemáticos 
+//==============================================================================
+void FourierSynthProcessor::updateDeltaAngle(){
+    deltaAngle = (440/currentSampleRate) * 2.0 * juce::MathConstants<double>::pi;
+}

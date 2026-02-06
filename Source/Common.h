@@ -11,7 +11,7 @@
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new FourierSynthProcessor(); }
 
 // Nome do plugin
-const juce::String FourierSynthProcessor::getName() const { return "Teste"; }
+const juce::String FourierSynthProcessor::getName() const { return "FourierSynth"; }
 
 // Tamanho da cauda gerada pelo processamento do plugin
 double FourierSynthProcessor::getTailLengthSeconds() const { return 0.0; }

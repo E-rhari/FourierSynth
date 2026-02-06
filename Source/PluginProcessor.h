@@ -81,6 +81,12 @@ public:
     // Ganho
     float gain_;
 
+
+    //==============================================================================
+    // Cálculos Matemáticos
+    //==============================================================================
+    void virtual updateDeltaAngle();
+
 private:
     //==============================================================================
     // Gestao de parametros
@@ -110,6 +116,10 @@ private:
     juce::LinearSmoothedValue<float> smoother;
     // Parametro para definir ganho
     juce::AudioParameterFloat* gainParam;
+
+    double currentSampleRate = 0;
+    double currentAngle = 0;
+    double deltaAngle = 0;
     //==============================================================================
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FourierSynthProcessor)
