@@ -24,6 +24,7 @@
 namespace ParamID {
     #define PARAMETER_ID(str) const juce::ParameterID str(#str, 1);
     PARAMETER_ID(gain)      // ganho
+    PARAMETER_ID(frequency);
     #undef PARAMETER_ID
 }
 
@@ -80,6 +81,7 @@ public:
     //------------------------------------------------------------------------------
     // Ganho
     float gain_;
+    float frequency_ = 440;
 
 
     //==============================================================================
@@ -116,6 +118,7 @@ private:
     juce::LinearSmoothedValue<float> smoother;
     // Parametro para definir ganho
     juce::AudioParameterFloat* gainParam;
+    juce::AudioParameterFloat* frequencyParam;
 
     double currentSampleRate = 0;
     double currentAngle = 0;

@@ -3,7 +3,7 @@
 #include "Common.h"
 
 // TODO: Quantidade de parametros
-const long unsigned int NUM_PARAMS = 1;
+const long unsigned int NUM_PARAMS = 2;
 
 //==============================================================================
 // Construtor e destrutor
@@ -16,8 +16,10 @@ FourierSynthProcessor::FourierSynthProcessor()
 {
     //TODO: inicializacao dos parametros do plugin
     gain_ = 1.0f;
+    frequency_ = 440.0f;
 
     castParameter(apvts, ParamID::gain, gainParam);
+    castParameter(apvts, ParamID::frequency, frequencyParam);
     apvts.state.addListener(this);
     
     createPrograms();
@@ -79,11 +81,9 @@ void FourierSynthProcessor::update() {
     smoother.setCurrentAndTargetValue(gainParam->get());
 
     gain_ = gainParam->get();
+    frequency_ = frequencyParam->get();
 
-    // exemplo de debug de parametro na console (precisa compilar em modo debug)  
-    std::stringstream ss;
-    ss << "gain: " << gain_;
-    DBG(ss.str()); //print na console para debug rapido
+    updateDeltaAngle();
 }
 
 //==============================================================================
@@ -98,7 +98,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout FourierSynthProcessor::creat
         ParamID::gain,
         "Gain",
         juce::NormalisableRange(0.0f, 2.0f),
-        1.0f));
+        1.0f
+    ));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        ParamID::frequency,
+        "Frequency",
+        juce::NormalisableRange(20.f, 7902.13f, 1.f, 0.5f, false), // Respectivamente: Inicio, Fim, Tamanho do passo, skew-factor, simetria
+        440.0f
+    ));
 
     return layout;
 }
@@ -110,8 +117,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout FourierSynthProcessor::creat
 // TODO: Cria presets iniciais
 void FourierSynthProcessor::createPrograms()
 {
-    presets.emplace_back(Preset("unity gain", {1.0f}));
-    presets.emplace_back(Preset("double gain", {2.0f}));
+    presets.emplace_back(Preset("A4", {1.0f, 440}));
+    presets.emplace_back(Preset("A5", {1.0f, 880}));
 }
 
 // TODO: Define preset atual
@@ -120,7 +127,8 @@ void FourierSynthProcessor::setCurrentProgram (int index)
     currentProgram = index;
     
     juce::RangedAudioParameter* params[NUM_PARAMS] = {
-        gainParam
+        gainParam,
+        frequencyParam
     };
 
     const Preset& preset = presets[(unsigned int)index];
@@ -137,5 +145,5 @@ void FourierSynthProcessor::setCurrentProgram (int index)
 // Cálculos matemáticos 
 //==============================================================================
 void FourierSynthProcessor::updateDeltaAngle(){
-    deltaAngle = (440/currentSampleRate) * 2.0 * juce::MathConstants<double>::pi;
+    deltaAngle = (frequency_/currentSampleRate) * 2.0 * juce::MathConstants<double>::pi;
 }
