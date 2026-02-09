@@ -1,11 +1,16 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-FourierSynthEditor::FourierSynthEditor (FourierSynthProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p)
+FourierSynthEditor::FourierSynthEditor (FourierSynthProcessor& _audioProcessor, juce::AudioProcessorValueTreeState& _apvts)
+    : AudioProcessorEditor (&_audioProcessor), audioProcessor (_audioProcessor), apvts(_apvts)
 {
-    // Para evitar warnings
-    juce::ignoreUnused(audioProcessor);
+    setResizable(true, false);
+
+    addAndMakeVisible(audioProcessor.keyboardComponent);
+
+    addAndMakeVisible (gainSlider);
+    gainSlider.setRange (50, 5000.0);
+    gainAttachment.reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvts, "gain", gainSlider));
     
     // Define o tamanho do editor
     setSize (400, 300);
@@ -25,4 +30,9 @@ void FourierSynthEditor::paint (juce::Graphics& g)
 }
 
 // Funcao em que sao definidas posicoes customizadas dos elementos
-void FourierSynthEditor::resized() {}
+void FourierSynthEditor::resized() 
+{
+    audioProcessor.keyboardComponent.setBounds (getLocalBounds().removeFromTop(80).reduced(8));
+    auto sliderLeft = 80;
+    gainSlider.setBounds (sliderLeft, 200, getWidth() - sliderLeft - 10, 20);
+}

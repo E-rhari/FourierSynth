@@ -10,6 +10,8 @@
 #define _USE_MATH_DEFINES
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_audio_utils/gui/juce_KeyboardComponentBase.h>
+#include <juce_audio_utils/gui/juce_MidiKeyboardComponent.h>
 
 #include <atomic>
 #include <vector>
@@ -28,7 +30,7 @@ namespace ParamID {
     #undef PARAMETER_ID
 }
 
-class FourierSynthProcessor : public juce::AudioProcessor, private juce::ValueTree::Listener
+class FourierSynthProcessor : public juce::AudioProcessor, private juce::ValueTree::Listener, juce::MidiKeyboardState::Listener 
 {
 public:
     //==============================================================================
@@ -68,12 +70,19 @@ public:
     //==============================================================================
 
     //==============================================================================
-    // Configuracoes de MIDI e barramentos (nao vamos usar)
+    // Configuracoes de MIDI e barramentos
     //------------------------------------------------------------------------------
     bool acceptsMidi() const override;
     bool producesMidi() const override;
     bool isMidiEffect() const override;
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
+    
+    void handleNoteOn(juce::MidiKeyboardState* source, int midiChannel, int midiNoteNumber, float velocity) override;
+    void handleNoteOff(juce::MidiKeyboardState* source, int midiChannel, int midiNoteNumber, float velocity) override;
+    
+    juce::MidiKeyboardState keyboardState;
+    juce::MidiKeyboardComponent keyboardComponent;
+
     //==============================================================================
 
     //==============================================================================
@@ -81,13 +90,13 @@ public:
     //------------------------------------------------------------------------------
     // Ganho
     float gain_;
-    float frequency_ = 440;
-
+    float frequency_;
 
     //==============================================================================
     // Cálculos Matemáticos
-    //==============================================================================
+    //------------------------------------------------------------------------------
     void virtual updateDeltaAngle();
+    //==============================================================================
 
 private:
     //==============================================================================

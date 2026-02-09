@@ -22,9 +22,7 @@ bool FourierSynthProcessor::hasEditor() const { return true; }
 // Cria editor generico
 juce::AudioProcessorEditor* FourierSynthProcessor::createEditor() 
 { 
-    auto editor = new juce::GenericAudioProcessorEditor(*this);
-    editor->setSize(500, 500);
-    return editor;
+    return new FourierSynthEditor(*this, apvts);
 }
 //==============================================================================
 
@@ -93,8 +91,8 @@ void FourierSynthProcessor::castParameter(juce::AudioProcessorValueTreeState& ap
 //==============================================================================
 // Configuracoes de MIDI e barramentos (nao utilizado)
 //------------------------------------------------------------------------------
-bool FourierSynthProcessor::acceptsMidi() const { return false; }
-bool FourierSynthProcessor::producesMidi() const { return false; }
+bool FourierSynthProcessor::acceptsMidi() const { return true; }
+bool FourierSynthProcessor::producesMidi() const { return true; }
 bool FourierSynthProcessor::isMidiEffect() const { return false; }
 bool FourierSynthProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {

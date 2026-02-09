@@ -12,7 +12,8 @@ FourierSynthProcessor::FourierSynthProcessor()
     : AudioProcessor (BusesProperties()
         //TODO: Define se plugin mono ou stereo
         .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-        .withOutput ("Output", juce::AudioChannelSet::stereo(), true))
+        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
+      keyboardComponent (keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     //TODO: inicializacao dos parametros do plugin
     gain_ = 1.0f;
@@ -24,6 +25,10 @@ FourierSynthProcessor::FourierSynthProcessor()
     
     createPrograms();
     setCurrentProgram(0);
+
+    // MIDI
+    // addAndMakeVisible (keyboardComponent);
+    keyboardState.addListener(this);
 }
 
 FourierSynthProcessor::~FourierSynthProcessor() 
@@ -143,7 +148,25 @@ void FourierSynthProcessor::setCurrentProgram (int index)
 
 //==============================================================================
 // Cálculos matemáticos 
-//==============================================================================
+//------------------------------------------------------------------------------
 void FourierSynthProcessor::updateDeltaAngle(){
     deltaAngle = (frequency_/currentSampleRate) * 2.0 * juce::MathConstants<double>::pi;
 }
+//==============================================================================
+
+
+//==============================================================================
+// MIDI
+//------------------------------------------------------------------------------
+void FourierSynthProcessor::handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity)
+{
+        auto m = juce::MidiMessage::noteOn (midiChannel, midiNoteNumber, velocity);
+        m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
+}
+
+void FourierSynthProcessor::handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float /*velocity*/)
+{
+        auto m = juce::MidiMessage::noteOff (midiChannel, midiNoteNumber);
+        m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
+}
+//==============================================================================
