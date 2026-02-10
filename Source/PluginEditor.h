@@ -1,6 +1,4 @@
-//==============================================================================
-// PluginEditor.h: definicao do PluginEditor
-//==============================================================================
+/** @brief Definitions for the editor (GUI) classes */
 
 #pragma once
 
@@ -16,13 +14,11 @@ public:
     void resized() override;
 
 private:
-    // Referencia para o editor acessar o objeto MyAudioProcessor que o criou
-    FourierSynthProcessor& audioProcessor;
-    juce::AudioProcessorValueTreeState& apvts;
+    FourierSynthProcessor& audioProcessor;      // Reference for the processor that created this editor
+    juce::AudioProcessorValueTreeState& apvts;  // Referece for the apvts of the audioprocessor. Shortcut for audioProcessor.apvts.
 
     juce::Slider gainSlider;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gainAttachment;
-
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FourierSynthEditor)
 };

@@ -1,12 +1,11 @@
+/** @brief Preset.h: estrutura padrao dos presets */
+
 #pragma once
 
 #include <string>
 #include <initializer_list>
 #include <vector>
 
-//==============================================================================
-// Preset.h: estrutura padrao dos presets
-//==============================================================================
 
 struct Preset
 {

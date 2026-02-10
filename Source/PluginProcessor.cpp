@@ -2,20 +2,18 @@
 #include "PluginEditor.h"
 #include "Common.h"
 
-// TODO: Quantidade de parametros
+// Amount of Parameters
 const long unsigned int NUM_PARAMS = 2;
 
-//==============================================================================
-// Construtor e destrutor
-//------------------------------------------------------------------------------
+
 FourierSynthProcessor::FourierSynthProcessor()
     : AudioProcessor (BusesProperties()
-        //TODO: Define se plugin mono ou stereo
+        // Define plugin as stereo
         .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
         .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       keyboardComponent (keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
-    //TODO: inicializacao dos parametros do plugin
+    // Configure Parameters
     gain_ = 1.0f;
     frequency_ = 440.0f;
 
@@ -23,11 +21,11 @@ FourierSynthProcessor::FourierSynthProcessor()
     castParameter(apvts, ParamID::frequency, frequencyParam);
     apvts.state.addListener(this);
     
+    // Configure presets
     createPrograms();
     setCurrentProgram(0);
 
     // MIDI
-    // addAndMakeVisible (keyboardComponent);
     keyboardState.addListener(this);
 }
 
@@ -35,13 +33,11 @@ FourierSynthProcessor::~FourierSynthProcessor()
 {
     apvts.state.removeListener(this);
 }
-//==============================================================================
 
-//==============================================================================
-// Funcoes de processamento de audio
-//------------------------------------------------------------------------------
 
-// TODO: funcao que roda logo ANTES de começar a processar
+// * Audio Processing *
+
+// Executes right before processing
 void FourierSynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) {
      juce::ignoreUnused(samplesPerBlock); 
      
@@ -49,19 +45,16 @@ void FourierSynthProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
      updateDeltaAngle();
 }
 
-// TODO: funcao que processa audio em loop - AUDIO THREAD!!!
+// Processes the audio - AUDIO THREAD!!!
 void FourierSynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    //ignora mensagens MIDI
     juce::ignoreUnused(midiMessages);
 
-    //loop pelos canais (plugin stereo)
-
-    //ponteiro para canal
+    // Define channel pointer to write audio data
     auto* channelDataLeft  = buffer.getWritePointer(0);
     auto* channelDataRight = buffer.getWritePointer(1);
     
-    //loop pelas amostras de audio no buffer
+    // loops over all the samples that should be written
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
     {
         double sampleValue = sin(currentAngle) * gain_;
@@ -71,17 +64,22 @@ void FourierSynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
         currentAngle += deltaAngle;
     }
 
-    //variavel parametersChanged muda pelo evento valueTreePropertyChanged que executa na thread de UI
+    // Detects change in any of the apvts parameters.
+    // The variable parametersChanged changes trough the event valueTreePropertyChanged, executed in the GUI thread (located at Common.h)
+    
     bool expected = true;
     if (parametersChanged.compare_exchange_strong(expected, false)) {
         update();
     }
 }
 
-// chamada logo DEPOIS de processar
+// Executes right after processing
 void FourierSynthProcessor::releaseResources() {}
 
-// TODO: atualiza parametros - AUDIO THREAD!!!
+
+// * Parameter Management *
+
+// Updates parameters according to the apvts values - AUDIO THREAD!!!
 void FourierSynthProcessor::update() {
     smoother.setCurrentAndTargetValue(gainParam->get());
 
@@ -91,10 +89,7 @@ void FourierSynthProcessor::update() {
     updateDeltaAngle();
 }
 
-//==============================================================================
-// Gestao de parametros
-//------------------------------------------------------------------------------
-// TODO: Cria parametros e adiciona em layout
+// Configures apvts parameter layout
 juce::AudioProcessorValueTreeState::ParameterLayout FourierSynthProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
@@ -115,18 +110,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout FourierSynthProcessor::creat
     return layout;
 }
 
-//==============================================================================
-// Gestao de presets (somente funcoes que variam por plugin. Ver Common.h)
-//------------------------------------------------------------------------------
 
-// TODO: Cria presets iniciais
+// * Preset management * 
+// (Only plugin specific management. For generic perset management, see Preset.h and Common.h)
+
+// Creates presets
 void FourierSynthProcessor::createPrograms()
 {
     presets.emplace_back(Preset("A4", {1.0f, 440}));
     presets.emplace_back(Preset("A5", {1.0f, 880}));
 }
 
-// TODO: Define preset atual
 void FourierSynthProcessor::setCurrentProgram (int index)
 {
     currentProgram = index;
@@ -146,18 +140,16 @@ void FourierSynthProcessor::setCurrentProgram (int index)
     reset();
 }
 
-//==============================================================================
-// Cálculos matemáticos 
-//------------------------------------------------------------------------------
+
+// * Mathy Stuff *
+
 void FourierSynthProcessor::updateDeltaAngle(){
     deltaAngle = (frequency_/currentSampleRate) * 2.0 * juce::MathConstants<double>::pi;
 }
-//==============================================================================
 
 
-//==============================================================================
-// MIDI
-//------------------------------------------------------------------------------
+// * MIDI *
+
 void FourierSynthProcessor::handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity)
 {
         auto m = juce::MidiMessage::noteOn (midiChannel, midiNoteNumber, velocity);
@@ -169,4 +161,3 @@ void FourierSynthProcessor::handleNoteOff (juce::MidiKeyboardState*, int midiCha
         auto m = juce::MidiMessage::noteOff (midiChannel, midiNoteNumber);
         m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
 }
-//==============================================================================

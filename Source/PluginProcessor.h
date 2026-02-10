@@ -1,6 +1,4 @@
-//==============================================================================
-// PluginProcessor.h: definicao do PluginProcessor
-//==============================================================================
+/** @brief Audio data processing classes */
 
 #pragma once
 #if defined(__GNUC__) && !defined(__clang__)
@@ -19,46 +17,39 @@
 
 #include "Preset.h"
 
-// TODO: Namespace onde os parametros do plugin sao declarados
-// Para adicionar um parametro, adicionar uma nova linha PARAMETER_ID(<nome_parametro>)
-// dentro do bloco #define/#undef
-
+/** @brief Namespace for plugin parameters IDs */
 namespace ParamID {
+    // Defines a model to instantiate ParaterIDs
     #define PARAMETER_ID(str) const juce::ParameterID str(#str, 1);
-    PARAMETER_ID(gain)      // ganho
+
+    // Initiates all parameters IDs
+    PARAMETER_ID(gain)
     PARAMETER_ID(frequency);
+
+    // Undefines model so it won't be used unproperly outside the namespace
     #undef PARAMETER_ID
 }
 
 class FourierSynthProcessor : public juce::AudioProcessor, private juce::ValueTree::Listener, juce::MidiKeyboardState::Listener 
 {
 public:
-    //==============================================================================
-    // Construtor e destrutor
-    //------------------------------------------------------------------------------
     FourierSynthProcessor();
     ~FourierSynthProcessor() override;
-    //==============================================================================
 
-    //==============================================================================
-    // Funcoes de processamento de audio
-    //------------------------------------------------------------------------------
+    // * Audio Processing *
+
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
     void releaseResources() override;
     double getTailLengthSeconds() const override;
-    //==============================================================================
 
-    //==============================================================================
-    // Controle de GUI
-    //------------------------------------------------------------------------------
+    // * GUI *
+
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override;
-    //==============================================================================
 
-    //==============================================================================
-    // Gestao de presets
-    //------------------------------------------------------------------------------
+    // * Preset management *
+
     const juce::String getName() const override;
     int getNumPrograms() override;
     int getCurrentProgram() override;
@@ -67,11 +58,9 @@ public:
     void changeProgramName (int index, const juce::String& newName) override;
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
-    //==============================================================================
 
-    //==============================================================================
-    // Configuracoes de MIDI e barramentos
-    //------------------------------------------------------------------------------
+    // * MIDI *
+
     bool acceptsMidi() const override;
     bool producesMidi() const override;
     bool isMidiEffect() const override;
@@ -83,32 +72,21 @@ public:
     juce::MidiKeyboardState keyboardState;
     juce::MidiKeyboardComponent keyboardComponent;
 
-    //==============================================================================
+    // * Plugin specific parameters *
 
-    //==============================================================================
-    // TODO: Parametros ajustaveis do plugin:
-    //------------------------------------------------------------------------------
-    // Ganho
     float gain_;
     float frequency_;
 
-    //==============================================================================
-    // Cálculos Matemáticos
-    //------------------------------------------------------------------------------
+    // * Mathy stuff *
+
     void virtual updateDeltaAngle();
-    //==============================================================================
 
 private:
-    //==============================================================================
-    // Gestao de parametros
-    //------------------------------------------------------------------------------
-    // Arvore de parametros
-    juce::AudioProcessorValueTreeState apvts { *this, nullptr, "Parameters", createParameterLayout() };
-    // Lista de presets
-    std::vector<Preset> presets;
-    // Indice do preset atual
-    int currentProgram;
-    // Indica se algum parametro mudou
+    // * Parameter Management *
+
+    juce::AudioProcessorValueTreeState apvts { *this, nullptr, "Parameters", createParameterLayout() }; // Parameter Tree
+    std::vector<Preset> presets;    // Preset List
+    int currentProgram;             // Curent Preset
     std::atomic<bool> parametersChanged { false };    
 
     void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) override;
@@ -118,21 +96,18 @@ private:
 
     template<typename T>
     inline static void castParameter(juce::AudioProcessorValueTreeState& apvts, const juce::ParameterID& id, T& destination);
-    //==============================================================================
 
-    //==============================================================================
-    // TODO: Detalhes especificos deste plugin
-    //------------------------------------------------------------------------------
-    // Suavizador de trocas de parametros
-    juce::LinearSmoothedValue<float> smoother;
-    // Parametro para definir ganho
+    // * Plugin specific parameters and propreties *
+
+    juce::LinearSmoothedValue<float> smoother;  // Parameter change smoother
     juce::AudioParameterFloat* gainParam;
     juce::AudioParameterFloat* frequencyParam;
 
     double currentSampleRate = 0;
     double currentAngle = 0;
     double deltaAngle = 0;
-    //==============================================================================
+
+    juce::TextEditor debugBox;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FourierSynthProcessor)
 };
