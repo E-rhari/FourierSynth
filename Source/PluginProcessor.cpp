@@ -154,10 +154,30 @@ void FourierSynthProcessor::handleNoteOn (juce::MidiKeyboardState*, int midiChan
 {
         auto m = juce::MidiMessage::noteOn (midiChannel, midiNoteNumber, velocity);
         m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
+        logMessage("Note on!");
 }
 
 void FourierSynthProcessor::handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float /*velocity*/)
 {
         auto m = juce::MidiMessage::noteOff (midiChannel, midiNoteNumber);
         m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
+        logMessage("Note off!");
+}
+
+
+// * Debug *
+void FourierSynthProcessor::logMessage(const juce::String& string, bool showTime /*=true*/)
+{
+    juce::String message = "";
+
+    if(showTime){
+        time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        std::stringstream ss;
+        ss << std::put_time(std::localtime(&now), "%Y-%m-%d %X");
+        message += juce::String(ss.str()) + ": ";
+    }
+
+    message += string;
+    debugBox.moveCaretToEnd();
+    debugBox.insertTextAtCaret(message + "\n");
 }

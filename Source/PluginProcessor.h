@@ -1,4 +1,4 @@
-/** @brief Audio data processing classes */
+/** @brief Definitions for audio data processing classes */
 
 #pragma once
 #if defined(__GNUC__) && !defined(__clang__)
@@ -15,6 +15,9 @@
 #include <vector>
 #include <cmath>
 
+#include <chrono>
+#include <ctime>
+
 #include "Preset.h"
 
 /** @brief Namespace for plugin parameters IDs */
@@ -25,7 +28,7 @@ namespace ParamID {
     // Initiates all parameters IDs
     PARAMETER_ID(gain)
     PARAMETER_ID(frequency);
-
+    
     // Undefines model so it won't be used unproperly outside the namespace
     #undef PARAMETER_ID
 }
@@ -77,9 +80,16 @@ public:
     float gain_;
     float frequency_;
 
+
     // * Mathy stuff *
 
     void virtual updateDeltaAngle();
+
+    // * Debug *
+
+    juce::TextEditor debugBox;
+
+    void virtual logMessage(const juce::String& string, bool showTime=true);
 
 private:
     // * Parameter Management *
@@ -107,7 +117,6 @@ private:
     double currentAngle = 0;
     double deltaAngle = 0;
 
-    juce::TextEditor debugBox;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FourierSynthProcessor)
 };
