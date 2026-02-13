@@ -1,9 +1,9 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "Common.h"
 
 // Amount of Parameters
 const long unsigned int NUM_PARAMS = 2;
+
 
 
 FourierSynthProcessor::FourierSynthProcessor()
@@ -35,6 +35,23 @@ FourierSynthProcessor::~FourierSynthProcessor()
 }
 
 
+// * General *
+
+// Creates plugin
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new FourierSynthProcessor(); }
+
+// Plugin Name
+const juce::String FourierSynthProcessor::getName() const { return "FourierSynth"; }
+double FourierSynthProcessor::getTailLengthSeconds() const { return 0.0; }
+bool FourierSynthProcessor::hasEditor() const { return true; }
+
+// Starts the editor and links it to the processor
+juce::AudioProcessorEditor* FourierSynthProcessor::createEditor() 
+{ 
+    return new FourierSynthEditor(*this, apvts);
+}
+
+
 // * Audio Processing *
 
 // Executes right before processing
@@ -48,6 +65,7 @@ void FourierSynthProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
 // Processes the audio - AUDIO THREAD!!!
 void FourierSynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    juce::ScopedNoDenormals noDenormals; // Blocks the CPU from turning normal floats into denormal float, which are slower
     juce::ignoreUnused(midiMessages);
 
     // Define channel pointer to write audio data
@@ -110,9 +128,19 @@ juce::AudioProcessorValueTreeState::ParameterLayout FourierSynthProcessor::creat
     return layout;
 }
 
+void FourierSynthProcessor::valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) {
+        parametersChanged.store(true);
+}
+
+template<typename T>
+void FourierSynthProcessor::castParameter(juce::AudioProcessorValueTreeState& apvts, const juce::ParameterID& id, T& destination)
+{
+    destination = dynamic_cast<T>(apvts.getParameter(id.getParamID())); // T is infered
+    jassert(destination); // Debug only
+}
+
 
 // * Preset management * 
-// (Only plugin specific management. For generic perset management, see Preset.h and Common.h)
 
 // Creates presets
 void FourierSynthProcessor::createPrograms()
@@ -140,6 +168,47 @@ void FourierSynthProcessor::setCurrentProgram (int index)
     reset();
 }
 
+// Amount of presets
+int FourierSynthProcessor::getNumPrograms()
+{
+    return int(presets.size());
+}
+
+// Current preset index
+int FourierSynthProcessor::getCurrentProgram()
+{
+    return currentProgram;
+}
+
+// Preset Name
+const juce::String FourierSynthProcessor::getProgramName (int index)
+{
+    return {presets[(unsigned int)index].name};
+}
+
+// Changes Preset Name
+void FourierSynthProcessor::changeProgramName (int index, const juce::String& newName)
+{
+    juce::ignoreUnused(index, newName); 
+}
+
+// Return current configuration, with presets, for a host capable of saving them, such as a DAW
+void FourierSynthProcessor::getStateInformation (juce::MemoryBlock& destData) 
+{
+    copyXmlToBinary(*apvts.copyState().createXml(), destData);
+}
+
+// Restores saved configs
+void FourierSynthProcessor::setStateInformation (const void* data, int sizeInBytes) 
+{
+    std::unique_ptr<juce::XmlElement> xml(getXmlFromBinary(data, sizeInBytes));
+
+    if (xml.get() != nullptr && xml->hasTagName(apvts.state.getType())) {
+        apvts.replaceState(juce::ValueTree::fromXml(*xml));
+        parametersChanged.store(true);
+    }
+}
+
 
 // * Mathy Stuff *
 
@@ -150,23 +219,31 @@ void FourierSynthProcessor::updateDeltaAngle(){
 
 // * MIDI *
 
+bool FourierSynthProcessor::acceptsMidi() const { return true; }
+bool FourierSynthProcessor::producesMidi() const { return true; }
+bool FourierSynthProcessor::isMidiEffect() const { return false; }
+bool FourierSynthProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+{
+    return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
+}
+
 void FourierSynthProcessor::handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity)
 {
-        auto m = juce::MidiMessage::noteOn (midiChannel, midiNoteNumber, velocity);
-        m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
-        logMessage("Note on!");
+        auto midiMessage = juce::MidiMessage::noteOn (midiChannel, midiNoteNumber, velocity);
+        midiMessage.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
+        debugLog("Note ON!");
 }
 
 void FourierSynthProcessor::handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float /*velocity*/)
 {
-        auto m = juce::MidiMessage::noteOff (midiChannel, midiNoteNumber);
-        m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
-        logMessage("Note off!");
+        auto midiMessage = juce::MidiMessage::noteOff (midiChannel, midiNoteNumber);
+        midiMessage.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
+        debugLog("Note OFF!");
 }
 
 
 // * Debug *
-void FourierSynthProcessor::logMessage(const juce::String& string, bool showTime /*=true*/)
+void FourierSynthProcessor::debugLog(const juce::String& string, bool showTime /*=true*/)
 {
     juce::String message = "";
 

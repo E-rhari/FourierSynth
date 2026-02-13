@@ -25,7 +25,7 @@ FourierSynthEditor::FourierSynthEditor (FourierSynthProcessor& _audioProcessor, 
     audioProcessor.debugBox.setColour (juce::TextEditor::shadowColourId, juce::Colour (0x16000000));
 
     setSize (400, 300);
-    audioProcessor.logMessage("-= Fourier Synth =-", false);
+    audioProcessor.debugLog("-= Fourier Synth =-", false);
 }
 
 FourierSynthEditor::~FourierSynthEditor() {}

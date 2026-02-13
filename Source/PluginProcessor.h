@@ -89,7 +89,7 @@ public:
 
     juce::TextEditor debugBox;
 
-    void virtual logMessage(const juce::String& string, bool showTime=true);
+    void virtual debugLog(const juce::String& string, bool showTime=true);
 
 private:
     // * Parameter Management *
