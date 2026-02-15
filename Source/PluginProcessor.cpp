@@ -24,8 +24,6 @@ FourierSynthProcessor::FourierSynthProcessor()
     createPrograms();
     setCurrentProgram(0);
 
-    // MIDI
-    keyboardState.addListener(this);
     debugLog("-= Fourier Synth =-", false);
 }
 
@@ -54,6 +52,7 @@ juce::AudioProcessorEditor* FourierSynthProcessor::createEditor()
 
 // * Audio Processing *
 
+// Segments the current block into smaller sections limited by the midi events.
 // It then renders every segment individually according to the currently playing midi notes.
 // Will also handle midi data as it comes in the midi buffer.
 void FourierSynthProcessor::splitBufferByEvents(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages){
@@ -271,13 +270,15 @@ bool FourierSynthProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
     return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
 }
 
-        auto midiMessage = juce::MidiMessage::noteOff (midiChannel, midiNoteNumber);
-        midiMessage.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
-        debugLog("Note OFF!");
+void FourierSynthProcessor::handleMidi(uint8_t data0, uint8_t data1, uint8_t data2){
+    char s[16];
+    snprintf(s, 16, "%02hhX %02hhX %02hhX", data0, data1, data2);
+    debugLog(s);
 }
 
 
 // * Debug *
+
 void FourierSynthProcessor::debugLog(const juce::String& string, bool showTime /*=true*/)
 {
     juce::String message = "";

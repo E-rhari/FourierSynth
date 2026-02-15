@@ -33,7 +33,7 @@ namespace ParamID {
     #undef PARAMETER_ID
 }
 
-class FourierSynthProcessor : public juce::AudioProcessor, private juce::ValueTree::Listener, juce::MidiKeyboardState::Listener 
+class FourierSynthProcessor : public juce::AudioProcessor, private juce::ValueTree::Listener
 {
 public:
     FourierSynthProcessor();
@@ -68,12 +68,6 @@ public:
     bool producesMidi() const override;
     bool isMidiEffect() const override;
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
-    
-    void handleNoteOn(juce::MidiKeyboardState* source, int midiChannel, int midiNoteNumber, float velocity) override;
-    void handleNoteOff(juce::MidiKeyboardState* source, int midiChannel, int midiNoteNumber, float velocity) override;
-    
-    juce::MidiKeyboardState keyboardState;
-    juce::MidiKeyboardComponent keyboardComponent;
 
     // * Plugin specific parameters *
 

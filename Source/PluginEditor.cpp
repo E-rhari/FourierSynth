@@ -7,8 +7,6 @@ FourierSynthEditor::FourierSynthEditor (FourierSynthProcessor& _audioProcessor, 
 {
     setResizable(true, false);
 
-    addAndMakeVisible(audioProcessor.keyboardComponent);
-
     addAndMakeVisible (gainSlider);
     gainSlider.setRange (50, 5000.0);
     gainAttachment.reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvts, "gain", gainSlider));
@@ -25,7 +23,6 @@ FourierSynthEditor::FourierSynthEditor (FourierSynthProcessor& _audioProcessor, 
     audioProcessor.debugBox.setColour (juce::TextEditor::shadowColourId, juce::Colour (0x16000000));
 
     setSize (400, 300);
-    audioProcessor.debugLog("-= Fourier Synth =-", false);
 }
 
 FourierSynthEditor::~FourierSynthEditor() {}
@@ -45,7 +42,6 @@ void FourierSynthEditor::resized()
 {
     float border = 30;
 
-    audioProcessor.keyboardComponent.setBounds (getLocalBounds().removeFromTop(80).reduced(8));
     gainSlider.setBounds (border, 200, getWidth() - border - 10, 20);
     audioProcessor.debugBox.setBounds(0, getHeight() - 75, getWidth(), 75);
 }
