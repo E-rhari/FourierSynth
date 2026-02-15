@@ -50,6 +50,11 @@ juce::AudioProcessorEditor* FourierSynthProcessor::createEditor()
 }
 
 
+void FourierSynthProcessor::reset(){
+    synth.reset();
+}
+
+
 // * Audio Processing *
 
 // Segments the current block into smaller sections limited by the midi events.
@@ -59,7 +64,6 @@ void FourierSynthProcessor::splitBufferByEvents(juce::AudioBuffer<float>& buffer
     int bufferOffset = 0;
 
     for(const juce::MidiMessageMetadata metadata : midiMessages){
-        
         // Render the audio that happens before this event (if any)
         int samplesThisSegment = metadata.samplePosition - bufferOffset;
         if(samplesThisSegment > 0){
@@ -91,10 +95,11 @@ void FourierSynthProcessor::render(juce::AudioBuffer<float>& buffer, int sampleC
 
 // Executes right before processing
 void FourierSynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) {
-     juce::ignoreUnused(samplesPerBlock); 
-     
-     currentSampleRate = sampleRate;
-     updateDeltaAngle();
+    synth.allocateResources(sampleRate, samplesPerBlock);
+    reset();
+
+    currentSampleRate = sampleRate;
+    updateDeltaAngle();
 }
 
 // Processes the audio - AUDIO THREAD!!!
@@ -135,7 +140,10 @@ void FourierSynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 }
 
 // Executes right after processing
-void FourierSynthProcessor::releaseResources() {}
+void FourierSynthProcessor::releaseResources()
+{
+    synth.deallocateResources();
+}
 
 
 // * Parameter Management *
@@ -274,6 +282,8 @@ void FourierSynthProcessor::handleMidi(uint8_t data0, uint8_t data1, uint8_t dat
     char s[16];
     snprintf(s, 16, "%02hhX %02hhX %02hhX", data0, data1, data2);
     debugLog(s);
+
+    synth.handleMidi(data0, data1, data2);
 }
 
 

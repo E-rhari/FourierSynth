@@ -8,8 +8,7 @@
 #define _USE_MATH_DEFINES
 
 #include <juce_audio_processors/juce_audio_processors.h>
-#include <juce_audio_utils/gui/juce_KeyboardComponentBase.h>
-#include <juce_audio_utils/gui/juce_MidiKeyboardComponent.h>
+#include "../JuceLibraryCode/JuceHeader.h"
 
 #include <atomic>
 #include <vector>
@@ -19,6 +18,8 @@
 #include <ctime>
 
 #include "Preset.h"
+#include "Synth.h"
+
 
 /** @brief Namespace for plugin parameters IDs */
 namespace ParamID {
@@ -114,6 +115,11 @@ private:
     void splitBufferByEvents(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void handleMidi(uint8_t data0, uint8_t data1, uint8_t data2);
     void render(juce::AudioBuffer<float>& buffer, int sampleCount, int bufferOffset);
+    void reset() override;
+
+    // * Components *
+
+    Synth synth;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FourierSynthProcessor)
 };
