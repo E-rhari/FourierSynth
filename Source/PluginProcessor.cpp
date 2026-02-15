@@ -10,8 +10,7 @@ FourierSynthProcessor::FourierSynthProcessor()
     : AudioProcessor (BusesProperties()
         // Define plugin as stereo
         .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      keyboardComponent (keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
+        .withOutput ("Output", juce::AudioChannelSet::stereo(), true))
 {
     // Configure Parameters
     gain_ = 1.0f;
@@ -27,6 +26,7 @@ FourierSynthProcessor::FourierSynthProcessor()
 
     // MIDI
     keyboardState.addListener(this);
+    debugLog("-= Fourier Synth =-", false);
 }
 
 FourierSynthProcessor::~FourierSynthProcessor() 
@@ -54,6 +54,42 @@ juce::AudioProcessorEditor* FourierSynthProcessor::createEditor()
 
 // * Audio Processing *
 
+// It then renders every segment individually according to the currently playing midi notes.
+// Will also handle midi data as it comes in the midi buffer.
+void FourierSynthProcessor::splitBufferByEvents(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages){
+    int bufferOffset = 0;
+
+    for(const juce::MidiMessageMetadata metadata : midiMessages){
+        
+        // Render the audio that happens before this event (if any)
+        int samplesThisSegment = metadata.samplePosition - bufferOffset;
+        if(samplesThisSegment > 0){
+            render(buffer, samplesThisSegment, bufferOffset);
+            bufferOffset += samplesThisSegment;
+        }
+
+        // Handle the event. Ignore MIDI messages such as sysex.
+        if(metadata.numBytes <= 3){
+            uint8_t data1 = (metadata.numBytes >= 2) ? metadata.data[1] : 0;
+            uint8_t data2 = (metadata.numBytes == 3) ? metadata.data[2] : 0;
+            handleMidi(metadata.data[0], data1, data2);
+        }
+    }
+
+    // Render the audio after the last MIDI event. 
+    // If there were no MIDI events at all, this renders the entire buffer.
+    int samplesLastSegment = buffer.getNumSamples() - bufferOffset;
+    if(samplesLastSegment > 0)
+        render(buffer, samplesLastSegment, bufferOffset);
+    
+    midiMessages.clear();
+}
+
+void FourierSynthProcessor::render(juce::AudioBuffer<float>& buffer, int sampleCount, int bufferOffset)
+{
+    // do nothing for now
+}
+
 // Executes right before processing
 void FourierSynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) {
      juce::ignoreUnused(samplesPerBlock); 
@@ -66,12 +102,20 @@ void FourierSynthProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
 void FourierSynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals; // Blocks the CPU from turning normal floats into denormal float, which are slower
-    juce::ignoreUnused(midiMessages);
+
+    int totalNumInputChannels = getTotalNumInputChannels();
+    int totalNumOutputChannels = getTotalNumOutputChannels();
+
+    // Clear any output channels that don't contain input data.
+    for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+        buffer.clear(i, 0, buffer.getNumSamples());
 
     // Define channel pointer to write audio data
-    auto* channelDataLeft  = buffer.getWritePointer(0);
-    auto* channelDataRight = buffer.getWritePointer(1);
-    
+    float* channelDataLeft  = buffer.getWritePointer(0);
+    float* channelDataRight = buffer.getWritePointer(1);
+
+    splitBufferByEvents(buffer, midiMessages);
+
     // loops over all the samples that should be written
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
     {
@@ -220,22 +264,13 @@ void FourierSynthProcessor::updateDeltaAngle(){
 // * MIDI *
 
 bool FourierSynthProcessor::acceptsMidi() const { return true; }
-bool FourierSynthProcessor::producesMidi() const { return true; }
+bool FourierSynthProcessor::producesMidi() const { return false; }
 bool FourierSynthProcessor::isMidiEffect() const { return false; }
 bool FourierSynthProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
     return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
 }
 
-void FourierSynthProcessor::handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity)
-{
-        auto midiMessage = juce::MidiMessage::noteOn (midiChannel, midiNoteNumber, velocity);
-        midiMessage.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
-        debugLog("Note ON!");
-}
-
-void FourierSynthProcessor::handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float /*velocity*/)
-{
         auto midiMessage = juce::MidiMessage::noteOff (midiChannel, midiNoteNumber);
         midiMessage.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
         debugLog("Note OFF!");

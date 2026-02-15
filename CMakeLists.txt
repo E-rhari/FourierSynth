@@ -48,6 +48,8 @@ juce_add_plugin(${PROJECT_NAME}
 	# Nome do criador do plugin
 	COMPANY_NAME "E-Rhari"
 
+	NEEDS_MIDI_INPUT TRUE
+
 	# Outras opcoes validas:
 	# PLUGIN_MANUFACTURER_CODE mc0   # AU/GarageBand. 4 caracters, o primeiro maiusculo, o resto minusculo
 	# PLUGIN_CODE  Basic              # AU/GarageBand. 4 caracters, o primeiro maiusculo, o resto minusculo
