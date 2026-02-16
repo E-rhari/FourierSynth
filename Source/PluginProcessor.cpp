@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Debug.h"
 
 // Amount of Parameters
 const long unsigned int NUM_PARAMS = 2;
@@ -24,7 +25,7 @@ FourierSynthProcessor::FourierSynthProcessor()
     createPrograms();
     setCurrentProgram(0);
 
-    debugLog("-= Fourier Synth =-", false);
+    Debug::log("-= Fourier Synth =-", false);
 }
 
 FourierSynthProcessor::~FourierSynthProcessor() 
@@ -281,7 +282,7 @@ bool FourierSynthProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
 void FourierSynthProcessor::handleMidi(uint8_t data0, uint8_t data1, uint8_t data2){
     char s[16];
     snprintf(s, 16, "%02hhX %02hhX %02hhX", data0, data1, data2);
-    debugLog(s);
+    Debug::log(s);
 
     synth.handleMidi(data0, data1, data2);
 }
