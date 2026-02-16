@@ -91,16 +91,19 @@ void FourierSynthProcessor::splitBufferByEvents(juce::AudioBuffer<float>& buffer
 
 void FourierSynthProcessor::render(juce::AudioBuffer<float>& buffer, int sampleCount, int bufferOffset)
 {
-    // do nothing for now
+    // Define channel pointer to write audio data
+    float* outputBuffers[2] = {nullptr, nullptr};
+    outputBuffers[0] = buffer.getWritePointer(0) + bufferOffset;
+    if(getTotalNumOutputChannels() > 1)
+        outputBuffers[1] = buffer.getWritePointer(1) + bufferOffset;
+
+    synth.render(outputBuffers, sampleCount, gain_);
 }
 
 // Executes right before processing
 void FourierSynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) {
-    synth.allocateResources(sampleRate, samplesPerBlock);
+    synth.allocateResources(sampleRate, samplesPerBlock, frequency_);
     reset();
-
-    currentSampleRate = sampleRate;
-    updateDeltaAngle();
 }
 
 // Processes the audio - AUDIO THREAD!!!
@@ -115,21 +118,7 @@ void FourierSynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
     for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
-    // Define channel pointer to write audio data
-    float* channelDataLeft  = buffer.getWritePointer(0);
-    float* channelDataRight = buffer.getWritePointer(1);
-
     splitBufferByEvents(buffer, midiMessages);
-
-    // loops over all the samples that should be written
-    for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-    {
-        double sampleValue = sin(currentAngle) * gain_;
-        channelDataLeft[sample] = sampleValue;
-        channelDataRight[sample] = sampleValue;
-
-        currentAngle += deltaAngle;
-    }
 
     // Detects change in any of the apvts parameters.
     // The variable parametersChanged changes trough the event valueTreePropertyChanged, executed in the GUI thread (located at Common.h)
@@ -155,8 +144,6 @@ void FourierSynthProcessor::update() {
 
     gain_ = gainParam->get();
     frequency_ = frequencyParam->get();
-
-    updateDeltaAngle();
 }
 
 // Configures apvts parameter layout
@@ -262,13 +249,6 @@ void FourierSynthProcessor::setStateInformation (const void* data, int sizeInByt
 }
 
 
-// * Mathy Stuff *
-
-void FourierSynthProcessor::updateDeltaAngle(){
-    deltaAngle = (frequency_/currentSampleRate) * 2.0 * juce::MathConstants<double>::pi;
-}
-
-
 // * MIDI *
 
 bool FourierSynthProcessor::acceptsMidi() const { return true; }
@@ -285,23 +265,4 @@ void FourierSynthProcessor::handleMidi(uint8_t data0, uint8_t data1, uint8_t dat
     Debug::log(s);
 
     synth.handleMidi(data0, data1, data2);
-}
-
-
-// * Debug *
-
-void FourierSynthProcessor::debugLog(const juce::String& string, bool showTime /*=true*/)
-{
-    juce::String message = "";
-
-    if(showTime){
-        time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        std::stringstream ss;
-        ss << std::put_time(std::localtime(&now), "%Y-%m-%d %X");
-        message += juce::String(ss.str()) + ": ";
-    }
-
-    message += string;
-    debugBox.moveCaretToEnd();
-    debugBox.insertTextAtCaret(message + "\n");
 }

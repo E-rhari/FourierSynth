@@ -34,7 +34,7 @@ void FourierSynthEditor::paint (juce::Graphics& g)
     g.setColour (juce::Colours::white);
     g.setFont (15.0f);
 
-    g.drawFittedText ("FourierSynth", getLocalBounds(), juce::Justification::centred, 1);
+    // g.drawFittedText ("FourierSynth", getLocalBounds(), juce::Justification::top, 1);
 }
 
 // Place components on the window

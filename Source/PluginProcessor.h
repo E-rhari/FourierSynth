@@ -75,17 +75,6 @@ public:
     float gain_;
     float frequency_;
 
-
-    // * Mathy stuff *
-
-    void virtual updateDeltaAngle();
-
-    // * Debug *
-
-    juce::TextEditor debugBox;
-
-    void virtual debugLog(const juce::String& string, bool showTime=true);
-
 private:
     // * Parameter Management *
 
@@ -107,10 +96,6 @@ private:
     juce::LinearSmoothedValue<float> smoother;  // Parameter change smoother
     juce::AudioParameterFloat* gainParam;
     juce::AudioParameterFloat* frequencyParam;
-
-    double currentSampleRate = 0;
-    double currentAngle = 0;
-    double deltaAngle = 0;
 
     void splitBufferByEvents(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void handleMidi(uint8_t data0, uint8_t data1, uint8_t data2);
