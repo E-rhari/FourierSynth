@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
@@ -11,7 +12,7 @@ class Synth
 public:
     Synth();
 
-    void allocateResources(double sampleRate, int samplesPerBlock, float frequency);
+    void allocateResources(double sampleRate, int samplesPerBlock);
     void deallocateResources();
     void reset();
     void render(float* outputBuffers[], int sampleCount, float gain);
@@ -21,12 +22,6 @@ private:
     double sampleRate;
     Voice voice;
 
-    double currentSampleRate = 0;
-    double currentAngle = 0;
-    double deltaAngle = 0;
-
     void noteOn(int note, int velocity);
     void noteOff(int note);
-
-    void virtual updateDeltaAngle(float frequency);
 };
