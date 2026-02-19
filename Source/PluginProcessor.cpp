@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Debug.h"
 
 // Amount of Parameters
 const long unsigned int NUM_PARAMS = 2;
@@ -10,8 +11,7 @@ FourierSynthProcessor::FourierSynthProcessor()
     : AudioProcessor (BusesProperties()
         // Define plugin as stereo
         .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      keyboardComponent (keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
+        .withOutput ("Output", juce::AudioChannelSet::stereo(), true))
 {
     // Configure Parameters
     gain_ = 1.0f;
@@ -25,8 +25,7 @@ FourierSynthProcessor::FourierSynthProcessor()
     createPrograms();
     setCurrentProgram(0);
 
-    // MIDI
-    keyboardState.addListener(this);
+    Debug::log("-= Fourier Synth =-", false);
 }
 
 FourierSynthProcessor::~FourierSynthProcessor() 
@@ -52,35 +51,74 @@ juce::AudioProcessorEditor* FourierSynthProcessor::createEditor()
 }
 
 
+void FourierSynthProcessor::reset(){
+    synth.reset();
+}
+
+
 // * Audio Processing *
+
+// Segments the current block into smaller sections limited by the midi events.
+// It then renders every segment individually according to the currently playing midi notes.
+// Will also handle midi data as it comes in the midi buffer.
+void FourierSynthProcessor::splitBufferByEvents(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages){
+    int bufferOffset = 0;
+
+    for(const juce::MidiMessageMetadata metadata : midiMessages){
+        // Render the audio that happens before this event (if any)
+        int samplesThisSegment = metadata.samplePosition - bufferOffset;
+        if(samplesThisSegment > 0){
+            render(buffer, samplesThisSegment, bufferOffset);
+            bufferOffset += samplesThisSegment;
+        }
+
+        // Handle the event. Ignore MIDI messages such as sysex.
+        if(metadata.numBytes <= 3){
+            uint8_t data1 = (metadata.numBytes >= 2) ? metadata.data[1] : 0;
+            uint8_t data2 = (metadata.numBytes == 3) ? metadata.data[2] : 0;
+            handleMidi(metadata.data[0], data1, data2);
+        }
+    }
+
+    // Render the audio after the last MIDI event. 
+    // If there were no MIDI events at all, this renders the entire buffer.
+    int samplesLastSegment = buffer.getNumSamples() - bufferOffset;
+    if(samplesLastSegment > 0)
+        render(buffer, samplesLastSegment, bufferOffset);
+    
+    midiMessages.clear();
+}
+
+void FourierSynthProcessor::render(juce::AudioBuffer<float>& buffer, int sampleCount, int bufferOffset)
+{
+    // Define channel pointer to write audio data
+    float* outputBuffers[2] = {nullptr, nullptr};
+    outputBuffers[0] = buffer.getWritePointer(0) + bufferOffset;
+    if(getTotalNumOutputChannels() > 1)
+        outputBuffers[1] = buffer.getWritePointer(1) + bufferOffset;
+
+    synth.render(outputBuffers, sampleCount, gain_);
+}
 
 // Executes right before processing
 void FourierSynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) {
-     juce::ignoreUnused(samplesPerBlock); 
-     
-     currentSampleRate = sampleRate;
-     updateDeltaAngle();
+    synth.allocateResources(sampleRate, samplesPerBlock, frequency_);
+    reset();
 }
 
 // Processes the audio - AUDIO THREAD!!!
 void FourierSynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals; // Blocks the CPU from turning normal floats into denormal float, which are slower
-    juce::ignoreUnused(midiMessages);
 
-    // Define channel pointer to write audio data
-    auto* channelDataLeft  = buffer.getWritePointer(0);
-    auto* channelDataRight = buffer.getWritePointer(1);
-    
-    // loops over all the samples that should be written
-    for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-    {
-        double sampleValue = sin(currentAngle) * gain_;
-        channelDataLeft[sample] = sampleValue;
-        channelDataRight[sample] = sampleValue;
+    int totalNumInputChannels = getTotalNumInputChannels();
+    int totalNumOutputChannels = getTotalNumOutputChannels();
 
-        currentAngle += deltaAngle;
-    }
+    // Clear any output channels that don't contain input data.
+    for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+        buffer.clear(i, 0, buffer.getNumSamples());
+
+    splitBufferByEvents(buffer, midiMessages);
 
     // Detects change in any of the apvts parameters.
     // The variable parametersChanged changes trough the event valueTreePropertyChanged, executed in the GUI thread (located at Common.h)
@@ -92,7 +130,10 @@ void FourierSynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
 }
 
 // Executes right after processing
-void FourierSynthProcessor::releaseResources() {}
+void FourierSynthProcessor::releaseResources()
+{
+    synth.deallocateResources();
+}
 
 
 // * Parameter Management *
@@ -103,8 +144,6 @@ void FourierSynthProcessor::update() {
 
     gain_ = gainParam->get();
     frequency_ = frequencyParam->get();
-
-    updateDeltaAngle();
 }
 
 // Configures apvts parameter layout
@@ -210,51 +249,20 @@ void FourierSynthProcessor::setStateInformation (const void* data, int sizeInByt
 }
 
 
-// * Mathy Stuff *
-
-void FourierSynthProcessor::updateDeltaAngle(){
-    deltaAngle = (frequency_/currentSampleRate) * 2.0 * juce::MathConstants<double>::pi;
-}
-
-
 // * MIDI *
 
 bool FourierSynthProcessor::acceptsMidi() const { return true; }
-bool FourierSynthProcessor::producesMidi() const { return true; }
+bool FourierSynthProcessor::producesMidi() const { return false; }
 bool FourierSynthProcessor::isMidiEffect() const { return false; }
 bool FourierSynthProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
     return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
 }
 
-void FourierSynthProcessor::handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity)
-{
-        auto midiMessage = juce::MidiMessage::noteOn (midiChannel, midiNoteNumber, velocity);
-        midiMessage.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
-        debugLog("Note ON!");
-}
+void FourierSynthProcessor::handleMidi(uint8_t data0, uint8_t data1, uint8_t data2){
+    char s[16];
+    snprintf(s, 16, "%02hhX %02hhX %02hhX", data0, data1, data2);
+    Debug::log(s);
 
-void FourierSynthProcessor::handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float /*velocity*/)
-{
-        auto midiMessage = juce::MidiMessage::noteOff (midiChannel, midiNoteNumber);
-        midiMessage.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
-        debugLog("Note OFF!");
-}
-
-
-// * Debug *
-void FourierSynthProcessor::debugLog(const juce::String& string, bool showTime /*=true*/)
-{
-    juce::String message = "";
-
-    if(showTime){
-        time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        std::stringstream ss;
-        ss << std::put_time(std::localtime(&now), "%Y-%m-%d %X");
-        message += juce::String(ss.str()) + ": ";
-    }
-
-    message += string;
-    debugBox.moveCaretToEnd();
-    debugBox.insertTextAtCaret(message + "\n");
+    synth.handleMidi(data0, data1, data2);
 }

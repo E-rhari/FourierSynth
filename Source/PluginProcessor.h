@@ -8,8 +8,7 @@
 #define _USE_MATH_DEFINES
 
 #include <juce_audio_processors/juce_audio_processors.h>
-#include <juce_audio_utils/gui/juce_KeyboardComponentBase.h>
-#include <juce_audio_utils/gui/juce_MidiKeyboardComponent.h>
+#include "../JuceLibraryCode/JuceHeader.h"
 
 #include <atomic>
 #include <vector>
@@ -19,6 +18,8 @@
 #include <ctime>
 
 #include "Preset.h"
+#include "Synth.h"
+
 
 /** @brief Namespace for plugin parameters IDs */
 namespace ParamID {
@@ -33,7 +34,7 @@ namespace ParamID {
     #undef PARAMETER_ID
 }
 
-class FourierSynthProcessor : public juce::AudioProcessor, private juce::ValueTree::Listener, juce::MidiKeyboardState::Listener 
+class FourierSynthProcessor : public juce::AudioProcessor, private juce::ValueTree::Listener
 {
 public:
     FourierSynthProcessor();
@@ -68,28 +69,11 @@ public:
     bool producesMidi() const override;
     bool isMidiEffect() const override;
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
-    
-    void handleNoteOn(juce::MidiKeyboardState* source, int midiChannel, int midiNoteNumber, float velocity) override;
-    void handleNoteOff(juce::MidiKeyboardState* source, int midiChannel, int midiNoteNumber, float velocity) override;
-    
-    juce::MidiKeyboardState keyboardState;
-    juce::MidiKeyboardComponent keyboardComponent;
 
     // * Plugin specific parameters *
 
     float gain_;
     float frequency_;
-
-
-    // * Mathy stuff *
-
-    void virtual updateDeltaAngle();
-
-    // * Debug *
-
-    juce::TextEditor debugBox;
-
-    void virtual debugLog(const juce::String& string, bool showTime=true);
 
 private:
     // * Parameter Management *
@@ -113,10 +97,14 @@ private:
     juce::AudioParameterFloat* gainParam;
     juce::AudioParameterFloat* frequencyParam;
 
-    double currentSampleRate = 0;
-    double currentAngle = 0;
-    double deltaAngle = 0;
+    void splitBufferByEvents(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
+    void handleMidi(uint8_t data0, uint8_t data1, uint8_t data2);
+    void render(juce::AudioBuffer<float>& buffer, int sampleCount, int bufferOffset);
+    void reset() override;
 
+    // * Components *
+
+    Synth synth;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FourierSynthProcessor)
 };
