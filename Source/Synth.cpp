@@ -1,5 +1,6 @@
 #include "Synth.h"
 #include <cstdlib>
+#include <math.h>
 
 
 Synth::Synth()
@@ -67,12 +68,21 @@ void Synth::handleMidi(uint8_t data0, uint8_t data1, uint8_t data2)
 }
 
 
+float Synth::midiNoteToFrequency(int note)
+{
+    const float refFreq = 440.f;
+    const int   refNote = 69;
+
+    return refFreq * std::pow(2, (note-refNote)/12.f);   // refFreq * (¹²√2)^(note-refNote). 12TET equal temperament frequency conversion
+}
+
+
 void Synth::noteOn(int note, int velocity){
     voice.note = note;
     voice.velocity = velocity;
 
     voice.osc.amplitude = (velocity / 127.f) * 0.5f;
-    voice.osc.freq = 440.f;
+    voice.osc.freq = midiNoteToFrequency(note);
     voice.osc.sampleRate = sampleRate;
     voice.osc.phaseOffset = 0.f;
     voice.osc.reset();
