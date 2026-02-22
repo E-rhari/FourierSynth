@@ -102,7 +102,7 @@ void FourierSynthProcessor::render(juce::AudioBuffer<float>& buffer, int sampleC
 
 // Executes right before processing
 void FourierSynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) {
-    synth.allocateResources(sampleRate, samplesPerBlock, frequency_);
+    synth.allocateResources(sampleRate, samplesPerBlock);
     reset();
 }
 
