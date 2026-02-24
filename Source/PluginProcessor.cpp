@@ -7,18 +7,28 @@ const long unsigned int NUM_PARAMS = 2;
 
 
 
-FourierSynthProcessor::FourierSynthProcessor()
-    : AudioProcessor (BusesProperties()
-        // Define plugin as stereo
-        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-        .withOutput ("Output", juce::AudioChannelSet::stereo(), true))
+FourierSynthProcessor::FourierSynthProcessor() : AudioProcessor (BusesProperties()
+                                                // Define plugin as stereo
+                                                .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
+                                                .withOutput ("Output", juce::AudioChannelSet::stereo(), true))
 {
     // Configure Parameters
     gain_ = 1.0f;
     frequency_ = 440.0f;
 
+    // Populate the Harmonic Gains Parameters
+    harmonicGainParams.resize(10);
+    harmonicGains_.resize(10);
+    harmonicGains_.at(0) = 1;
+    for(float harmonicGain_ : harmonicGains_)
+        harmonicGain_ = 0;
+    ParamID::populateHarmonicGainsID(10);
+
+    // Allocate the parameters to the pointers '[parameter]Param'
     castParameter(apvts, ParamID::gain, gainParam);
     castParameter(apvts, ParamID::frequency, frequencyParam);
+    for(size_t i=0; i<ParamID::harmonicGains.size(); i++) 
+        castParameter(apvts, ParamID::harmonicGains.at(i), harmonicGainParams.at(i));
     apvts.state.addListener(this);
     
     // Configure presets
@@ -144,6 +154,9 @@ void FourierSynthProcessor::update() {
 
     gain_ = gainParam->get();
     frequency_ = frequencyParam->get();
+
+    for(size_t i=0; i<harmonicGainParams.size(); i++)
+        harmonicGains_.at(i) = harmonicGainParams.at(i)->get();
 }
 
 // Configures apvts parameter layout
@@ -164,6 +177,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout FourierSynthProcessor::creat
         440.0f
     ));
 
+    for(size_t i=0; i<ParamID::harmonicGains.size(); i++)
+        layout.add(std::make_unique<juce::AudioParameterFloat>(
+            ParamID::harmonicGains.at(i),
+            std::format("Harmonic Gain {}", i),
+            juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
+            0.f
+        ));
+
     return layout;
 }
 
@@ -177,7 +198,6 @@ void FourierSynthProcessor::castParameter(juce::AudioProcessorValueTreeState& ap
     destination = dynamic_cast<T>(apvts.getParameter(id.getParamID())); // T is infered
     jassert(destination); // Debug only
 }
-
 
 // * Preset management * 
 
@@ -259,10 +279,22 @@ bool FourierSynthProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
     return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
 }
 
-void FourierSynthProcessor::handleMidi(uint8_t data0, uint8_t data1, uint8_t data2){
+void FourierSynthProcessor::handleMidi(uint8_t data0, uint8_t data1, uint8_t data2)
+{
     char s[16];
     snprintf(s, 16, "%02hhX %02hhX %02hhX", data0, data1, data2);
     Debug::log(s);
 
     synth.handleMidi(data0, data1, data2);
 }
+
+
+// * ParamID *
+
+void ParamID::populateHarmonicGainsID(size_t size){
+    ParamID::harmonicGains.resize(10);
+    for(size_t i=0; i<size; i++)
+        ParamID::harmonicGains.at(i) = juce::ParameterID(std::format("harmonicGain{}", i), 1);
+}
+
+std::vector<juce::ParameterID> ParamID::harmonicGains;

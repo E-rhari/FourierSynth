@@ -13,6 +13,7 @@
 #include <atomic>
 #include <vector>
 #include <cmath>
+#include <format>
 
 #include <chrono>
 #include <ctime>
@@ -28,11 +29,17 @@ namespace ParamID {
 
     // Initiates all parameters IDs
     PARAMETER_ID(gain)
-    PARAMETER_ID(frequency);
+    PARAMETER_ID(frequency)
     
     // Undefines model so it won't be used unproperly outside the namespace
     #undef PARAMETER_ID
+
+
+    extern std::vector<juce::ParameterID> harmonicGains;
+    
+    void populateHarmonicGainsID(size_t size);
 }
+
 
 class FourierSynthProcessor : public juce::AudioProcessor, private juce::ValueTree::Listener
 {
@@ -74,6 +81,7 @@ public:
 
     float gain_;
     float frequency_;
+    std::vector<float> harmonicGains_;
 
 private:
     // * Parameter Management *
@@ -96,6 +104,7 @@ private:
     juce::LinearSmoothedValue<float> smoother;  // Parameter change smoother
     juce::AudioParameterFloat* gainParam;
     juce::AudioParameterFloat* frequencyParam;
+    std::vector<juce::AudioParameterFloat*> harmonicGainParams;
 
     void splitBufferByEvents(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void handleMidi(uint8_t data0, uint8_t data1, uint8_t data2);

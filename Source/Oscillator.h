@@ -14,6 +14,8 @@ public:
     float phaseOffset;
     int sampleIndex;
 
+    float amplitudes[10];
+
 
     void reset()
     {
@@ -24,6 +26,11 @@ public:
     float nextSample()
     {
         sampleIndex += 1;
-        return amplitude * std::sin(2*PI * sampleIndex * (freq / sampleRate) + phaseOffset);
+        float sampleValue = 0;
+
+        for(int i=0; i<10; i++)
+            sampleValue += std::sin(2*PI * sampleIndex * ((i+1)*freq / sampleRate) + phaseOffset) * amplitudes[i];
+
+        return amplitude * sampleValue;
     }
 };

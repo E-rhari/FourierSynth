@@ -63,7 +63,7 @@ juce_add_plugin(${PROJECT_NAME}
 )
 
 # Define o padrão de C++ (17 ou superior)
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)  
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)  
 
 # Indica quais são os fontes que formam o projeto (arquivos .h são adicionados pelos .cpp, não entram aqui)
 target_sources(${PROJECT_NAME}
