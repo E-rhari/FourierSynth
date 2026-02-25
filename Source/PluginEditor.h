@@ -20,6 +20,9 @@ private:
 
     juce::Slider gainSlider;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gainAttachment;
+
+    std::vector<std::unique_ptr<juce::Slider>> harmonicGainSliders;
+    std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>> harmonicGainAttachments;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FourierSynthEditor)
 };
