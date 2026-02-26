@@ -9,7 +9,7 @@ FourierSynthEditor::FourierSynthEditor (FourierSynthProcessor& _audioProcessor, 
 
     addAndMakeVisible (gainSlider);
     gainSlider.setRange (50, 5000.0);
-    gainAttachment.reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvts, "gain", gainSlider));
+    gainAttachment.reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvts, ParamID::gain.getParamID(), gainSlider));
 
     for(size_t i=0; i<audioProcessor.harmonicGains_.size(); i++){
         harmonicGainSliders.push_back(std::make_unique<juce::Slider>());
@@ -18,7 +18,7 @@ FourierSynthEditor::FourierSynthEditor (FourierSynthProcessor& _audioProcessor, 
         harmonicGainSliders.at(i)->setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical);
 
         harmonicGainAttachments.emplace_back();
-        harmonicGainAttachments.at(i).reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvts, std::format("harmonicGain{}", i), *harmonicGainSliders.at(i)));
+        harmonicGainAttachments.at(i).reset(new juce::AudioProcessorValueTreeState::SliderAttachment(apvts, ParamID::harmonicGains.at(i).getParamID(), *harmonicGainSliders.at(i)));
     }
 
     setSize (400, 300);
@@ -42,6 +42,6 @@ void FourierSynthEditor::resized()
     gainSlider.setBounds (border, 200, getWidth() - 2*border, 20);
 
     float sliderWidth = (getWidth() - 2*border)/harmonicGainSliders.size();
-    for(int i=0; i<harmonicGainSliders.size(); i++)
+    for(size_t i=0; i<harmonicGainSliders.size(); i++)
         harmonicGainSliders.at(i)->setBounds(border + sliderWidth*i, 75, sliderWidth, 100);
 }

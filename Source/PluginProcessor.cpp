@@ -17,11 +17,16 @@ FourierSynthProcessor::FourierSynthProcessor() : AudioProcessor (BusesProperties
 
     // Populate the Harmonic Gains Parameters
     harmonicGainParams.resize(10);
-    harmonicGains_.resize(10);
+    harmonicGains_.resize(10, 0);
     harmonicGains_.at(0) = 1;
-    for(float harmonicGain_ : harmonicGains_)
-        harmonicGain_ = 0;
     ParamID::populateHarmonicGainsID(10);
+    for(size_t i=0; i<ParamID::harmonicGains.size(); i++)
+        apvts.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+            ParamID::harmonicGains.at(i),
+            std::format("HarmonicGain{}", i),
+            juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
+            0.5f
+        ));
 
     // Allocate the parameters to the pointers '[parameter]Param'
     castParameter(apvts, ParamID::gain, gainParam);
@@ -178,7 +183,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout FourierSynthProcessor::creat
     for(size_t i=0; i<ParamID::harmonicGains.size(); i++)
         layout.add(std::make_unique<juce::AudioParameterFloat>(
             ParamID::harmonicGains.at(i),
-            std::format("Harmonic Gain {}", i),
+            std::format("HarmonicGain{}", i),
             juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
             0.5f
         ));
@@ -289,6 +294,7 @@ void ParamID::populateHarmonicGainsID(size_t size){
     ParamID::harmonicGains.resize(10);
     for(size_t i=0; i<size; i++)
         ParamID::harmonicGains.at(i) = juce::ParameterID(std::format("harmonicGain{}", i), 1);
+    
 }
 
 std::vector<juce::ParameterID> ParamID::harmonicGains;
