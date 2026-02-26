@@ -3,7 +3,6 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include "Debug.h"
 
 class FourierSynthEditor : public juce::AudioProcessorEditor
 {

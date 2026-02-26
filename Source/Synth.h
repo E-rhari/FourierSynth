@@ -4,7 +4,6 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 
 #include "Voice.h"
-#include "Debug.h"
 
 
 class Synth

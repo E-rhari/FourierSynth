@@ -1,6 +1,5 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "Debug.h"
 
 // Amount of Parameters
 const long unsigned int NUM_PARAMS = 2;
@@ -29,13 +28,12 @@ FourierSynthProcessor::FourierSynthProcessor() : AudioProcessor (BusesProperties
     castParameter(apvts, ParamID::frequency, frequencyParam);
     for(size_t i=0; i<ParamID::harmonicGains.size(); i++) 
         castParameter(apvts, ParamID::harmonicGains.at(i), harmonicGainParams.at(i));
+
     apvts.state.addListener(this);
     
     // Configure presets
     createPrograms();
     setCurrentProgram(0);
-
-    Debug::log("-= Fourier Synth =-", false);
 }
 
 FourierSynthProcessor::~FourierSynthProcessor() 
@@ -182,7 +180,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout FourierSynthProcessor::creat
             ParamID::harmonicGains.at(i),
             std::format("Harmonic Gain {}", i),
             juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
-            0.f
+            0.5f
         ));
 
     return layout;
@@ -281,10 +279,6 @@ bool FourierSynthProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
 
 void FourierSynthProcessor::handleMidi(uint8_t data0, uint8_t data1, uint8_t data2)
 {
-    char s[16];
-    snprintf(s, 16, "%02hhX %02hhX %02hhX", data0, data1, data2);
-    Debug::log(s);
-
     synth.handleMidi(data0, data1, data2);
 }
 
