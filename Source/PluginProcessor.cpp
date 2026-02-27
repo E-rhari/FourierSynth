@@ -17,7 +17,7 @@ FourierSynthProcessor::FourierSynthProcessor() : AudioProcessor (BusesProperties
 
     // Populate the Harmonic Gains Parameters
     harmonicGainParams.resize(10);
-    harmonicGains_.resize(10, 0);
+    harmonicGains_.resize(10, .5f);
     harmonicGains_.at(0) = 1;
     ParamID::populateHarmonicGainsID(10);
     for(size_t i=0; i<ParamID::harmonicGains.size(); i++)
@@ -115,7 +115,7 @@ void FourierSynthProcessor::render(juce::AudioBuffer<float>& buffer, int sampleC
 
 // Executes right before processing
 void FourierSynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) {
-    synth.allocateResources(sampleRate, samplesPerBlock);
+    synth.allocateResources(sampleRate, samplesPerBlock, harmonicGains_);
     reset();
 }
 
@@ -160,6 +160,7 @@ void FourierSynthProcessor::update() {
 
     for(size_t i=0; i<harmonicGainParams.size(); i++)
         harmonicGains_.at(i) = harmonicGainParams.at(i)->get();
+    synth.voice.osc.setAmplitudes(harmonicGains_);
 }
 
 // Configures apvts parameter layout

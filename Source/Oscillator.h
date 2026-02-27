@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include <stdlib.h>
 
 
 #define PI juce::MathConstants<float>::pi
@@ -14,7 +15,7 @@ public:
     float phaseOffset;
     int sampleIndex;
 
-    float amplitudes[10];
+    std::vector<float> harmonics;
 
 
     void reset()
@@ -28,9 +29,16 @@ public:
         sampleIndex += 1;
         float sampleValue = 0;
 
-        for(int i=0; i<10; i++)
-            sampleValue += std::sin(2*PI * sampleIndex * ((i+1)*freq / sampleRate) + phaseOffset) * amplitudes[i];
+        for(size_t i=0; i<10; i++)
+            sampleValue += std::sin(2*PI * sampleIndex * ((i+1)*freq / sampleRate) + phaseOffset) * harmonics.at(i);
 
         return amplitude * sampleValue;
+    }
+
+    void setAmplitudes(std::vector<float> harmonics_){
+        // amplitudes.resize(harmonics_.size());
+        // for(size_t i=0; i<harmonics_.size(); i++)
+        //     amplitudes.at(i) = harmonics_.at(i);
+        harmonics = harmonics_;
     }
 };
