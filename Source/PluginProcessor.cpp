@@ -161,6 +161,7 @@ void FourierSynthProcessor::update() {
     for(size_t i=0; i<harmonicGainParams.size(); i++)
         harmonicGains_.at(i) = harmonicGainParams.at(i)->get();
     synth.voice.osc.setAmplitudes(harmonicGains_);
+    Debug::log("Updated!");
 }
 
 // Configures apvts parameter layout

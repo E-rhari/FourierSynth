@@ -15,11 +15,9 @@
 #include <cmath>
 #include <format>
 
-#include <chrono>
-#include <ctime>
-
 #include "Preset.h"
 #include "Synth.h"
+#include "Debug.h"
 
 
 /** @brief Namespace for plugin parameters IDs */
