@@ -2,7 +2,7 @@
 #include "PluginEditor.h"
 
 // Amount of Parameters
-const long unsigned int NUM_PARAMS = 2;
+const long unsigned int NUM_PARAMS = 1;
 
 
 
@@ -13,7 +13,6 @@ FourierSynthProcessor::FourierSynthProcessor() : AudioProcessor (BusesProperties
 {
     // Configure Parameters
     gain_ = 1.0f;
-    frequency_ = 440.0f;
 
     // Populate the Harmonic Gains Parameters
     harmonicGainParams.resize(10);
@@ -30,7 +29,6 @@ FourierSynthProcessor::FourierSynthProcessor() : AudioProcessor (BusesProperties
 
     // Allocate the parameters to the pointers '[parameter]Param'
     castParameter(apvts, ParamID::gain, gainParam);
-    castParameter(apvts, ParamID::frequency, frequencyParam);
     for(size_t i=0; i<ParamID::harmonicGains.size(); i++) 
         castParameter(apvts, ParamID::harmonicGains.at(i), harmonicGainParams.at(i));
 
@@ -156,7 +154,6 @@ void FourierSynthProcessor::update() {
     smoother.setCurrentAndTargetValue(gainParam->get());
 
     gain_ = gainParam->get();
-    frequency_ = frequencyParam->get();
 
     for(size_t i=0; i<harmonicGainParams.size(); i++)
         harmonicGains_.at(i) = harmonicGainParams.at(i)->get();
@@ -175,18 +172,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout FourierSynthProcessor::creat
         juce::NormalisableRange(0.0f, 2.0f),
         1.0f
     ));
-    layout.add(std::make_unique<juce::AudioParameterFloat>(
-        ParamID::frequency,
-        "Frequency",
-        juce::NormalisableRange(20.f, 7902.13f, 1.f, 0.5f, false), // Respectivamente: Inicio, Fim, Tamanho do passo, skew-factor, simetria
-        440.0f
-    ));
 
     for(size_t i=0; i<ParamID::harmonicGains.size(); i++)
         layout.add(std::make_unique<juce::AudioParameterFloat>(
             ParamID::harmonicGains.at(i),
             std::format("HarmonicGain{}", i),
-            juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
+            juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false), // Respectivamente: Inicio, Fim, Tamanho do passo, skew-factor, simetria
             0.5f
         ));
 
@@ -209,8 +200,8 @@ void FourierSynthProcessor::castParameter(juce::AudioProcessorValueTreeState& ap
 // Creates presets
 void FourierSynthProcessor::createPrograms()
 {
-    presets.emplace_back(Preset("A4", {1.0f, 440}));
-    presets.emplace_back(Preset("A5", {1.0f, 880}));
+    presets.emplace_back(Preset("Default", {1.0f}));
+    presets.emplace_back(Preset("Quiet", {0.5f}));
 }
 
 void FourierSynthProcessor::setCurrentProgram (int index)
@@ -218,8 +209,7 @@ void FourierSynthProcessor::setCurrentProgram (int index)
     currentProgram = index;
     
     juce::RangedAudioParameter* params[NUM_PARAMS] = {
-        gainParam,
-        frequencyParam
+        gainParam
     };
 
     const Preset& preset = presets[(unsigned int)index];

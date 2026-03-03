@@ -27,7 +27,6 @@ namespace ParamID {
 
     // Initiates all parameters IDs
     PARAMETER_ID(gain)
-    PARAMETER_ID(frequency)
     
     // Undefines model so it won't be used unproperly outside the namespace
     #undef PARAMETER_ID
@@ -78,7 +77,6 @@ public:
     // * Plugin specific parameters *
 
     float gain_;
-    float frequency_;
     std::vector<float> harmonicGains_;
 
 private:
@@ -101,7 +99,6 @@ private:
 
     juce::LinearSmoothedValue<float> smoother;  // Parameter change smoother
     juce::AudioParameterFloat* gainParam;
-    juce::AudioParameterFloat* frequencyParam;
     std::vector<juce::AudioParameterFloat*> harmonicGainParams;
 
     void splitBufferByEvents(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
