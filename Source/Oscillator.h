@@ -29,7 +29,7 @@ public:
         sampleIndex += 1;
         float sampleValue = 0;
 
-        for(size_t i=0; i<10; i++)
+        for(size_t i=0; i<harmonics.size(); i++)
             sampleValue += std::sin(2*PI * sampleIndex * ((i+1)*freq / sampleRate) + phaseOffset) * harmonics.at(i);
 
         return amplitude * sampleValue;

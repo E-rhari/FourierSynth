@@ -79,6 +79,9 @@ public:
     float gain_;
     std::vector<float> harmonicGains_;
 
+    void addHarmonic();
+    void removeHarmonic();
+
 private:
     // * Parameter Management *
 

@@ -15,23 +15,15 @@ FourierSynthProcessor::FourierSynthProcessor() : AudioProcessor (BusesProperties
     gain_ = 1.0f;
 
     // Populate the Harmonic Gains Parameters
-    harmonicGainParams.resize(10);
-    harmonicGains_.resize(10, .5f);
+    for(size_t i=0; i<10; i++)
+        addHarmonic();
     harmonicGains_.at(0) = 1;
-    ParamID::populateHarmonicGainsID(10);
-    for(size_t i=0; i<ParamID::harmonicGains.size(); i++)
-        apvts.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
-            ParamID::harmonicGains.at(i),
-            std::format("HarmonicGain{}", i),
-            juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
-            0.5f
-        ));
-
+    
     // Allocate the parameters to the pointers '[parameter]Param'
     castParameter(apvts, ParamID::gain, gainParam);
     for(size_t i=0; i<ParamID::harmonicGains.size(); i++) 
-        castParameter(apvts, ParamID::harmonicGains.at(i), harmonicGainParams.at(i));
-
+    castParameter(apvts, ParamID::harmonicGains.at(i), harmonicGainParams.at(i));
+    
     apvts.state.addListener(this);
     
     // Configure presets
@@ -277,6 +269,37 @@ bool FourierSynthProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
 void FourierSynthProcessor::handleMidi(uint8_t data0, uint8_t data1, uint8_t data2)
 {
     synth.handleMidi(data0, data1, data2);
+}
+
+
+// * Harmonics *
+
+void FourierSynthProcessor::addHarmonic(){
+    size_t index = harmonicGainParams.size();
+
+    harmonicGainParams.push_back(nullptr);
+    harmonicGains_.push_back(0.f);
+    ParamID::harmonicGains.emplace_back();
+    
+    ParamID::harmonicGains.at(index) = juce::ParameterID(std::format("harmonicGain{}", index), 1);
+
+    apvts.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+            ParamID::harmonicGains.at(index),
+            std::format("HarmonicGain{}", index),
+            juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
+            0.5f
+        ));
+    castParameter(apvts, ParamID::harmonicGains.at(index), harmonicGainParams.at(index));
+
+    getActiveEditor();
+}
+
+void FourierSynthProcessor::removeHarmonic(){
+    harmonicGainParams.pop_back();
+    harmonicGains_.pop_back();
+    ParamID::harmonicGains.pop_back();
+
+    // apvts.
 }
 
 
