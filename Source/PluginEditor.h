@@ -28,6 +28,7 @@ private:
     
     juce::TextButton addHarmonicButton;
     juce::TextButton removeHarmonicButton;
+    juce::TextButton updateButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FourierSynthEditor)
 };

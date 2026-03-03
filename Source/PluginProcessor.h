@@ -82,6 +82,8 @@ public:
     void addHarmonic();
     void removeHarmonic();
 
+    void update();
+    
 private:
     // * Parameter Management *
 
@@ -92,7 +94,6 @@ private:
 
     void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) override;
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-    void update();
     void createPrograms();
 
     template<typename T>

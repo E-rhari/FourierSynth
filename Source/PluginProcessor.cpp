@@ -18,6 +18,7 @@ FourierSynthProcessor::FourierSynthProcessor() : AudioProcessor (BusesProperties
     for(size_t i=0; i<10; i++)
         addHarmonic();
     harmonicGains_.at(0) = 1;
+    harmonicGainParams.at(0)->setValueNotifyingHost(1.f);
     
     // Allocate the parameters to the pointers '[parameter]Param'
     castParameter(apvts, ParamID::gain, gainParam);
@@ -169,8 +170,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout FourierSynthProcessor::creat
         layout.add(std::make_unique<juce::AudioParameterFloat>(
             ParamID::harmonicGains.at(i),
             std::format("HarmonicGain{}", i),
-            juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false), // Respectivamente: Inicio, Fim, Tamanho do passo, skew-factor, simetria
-            0.5f
+            juce::NormalisableRange(0.f, 1.f, 0.001f, 1.f, false), // Respectivamente: Inicio, Fim, Tamanho do passo, skew-factor, simetria
+            0.f
         ));
 
     return layout;
@@ -286,8 +287,8 @@ void FourierSynthProcessor::addHarmonic(){
     apvts.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
             ParamID::harmonicGains.at(index),
             std::format("HarmonicGain{}", index),
-            juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
-            0.5f
+            juce::NormalisableRange(0.f, 1.f, 0.001f, 1.f, false),
+            0.f
         ));
     castParameter(apvts, ParamID::harmonicGains.at(index), harmonicGainParams.at(index));
 

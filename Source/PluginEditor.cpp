@@ -18,13 +18,16 @@ FourierSynthEditor::FourierSynthEditor (FourierSynthProcessor& _audioProcessor, 
     // Setting up buttons
     addHarmonicButton.onClick    = [this]() { audioProcessor.addHarmonic(); addHarmonic(); }; 
     removeHarmonicButton.onClick = [this]() { audioProcessor.removeHarmonic(); removeHarmonic(); }; 
+    updateButton.onClick         = [this]() { audioProcessor.update(); };
 
-    // Buttons
     addAndMakeVisible(addHarmonicButton);
     addHarmonicButton.setButtonText("+");
     addAndMakeVisible(removeHarmonicButton);
     removeHarmonicButton.setButtonText("-");
+    addAndMakeVisible(updateButton);
+    updateButton.setButtonText("Update");
 
+    // Window
     setSize (400, 300);
 }
 
@@ -51,6 +54,7 @@ void FourierSynthEditor::resized()
 
     addHarmonicButton.setBounds(getWidth() - border - 30, 175, 30, 30);
     removeHarmonicButton.setBounds(getWidth() - border - 2*30, 175, 30, 30);
+    updateButton.setBounds(getWidth()/2 - 30, 250, 60, 30);
 }
 
 
