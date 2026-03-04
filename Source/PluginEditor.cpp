@@ -74,6 +74,8 @@ void FourierSynthEditor::addHarmonic(){
 
 
 void FourierSynthEditor::removeHarmonic(){
+    if(harmonicGainAttachments.size() == 1)
+        return;
     harmonicGainAttachments.pop_back();
     harmonicGainSliders.pop_back();
 

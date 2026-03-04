@@ -296,6 +296,8 @@ void FourierSynthProcessor::addHarmonic(){
 }
 
 void FourierSynthProcessor::removeHarmonic(){
+    if(harmonicGainParams.size() == 1)
+        return;
     harmonicGainParams.pop_back();
     harmonicGains_.pop_back();
     ParamID::harmonicGains.pop_back();
