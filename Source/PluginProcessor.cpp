@@ -22,8 +22,6 @@ FourierSynthProcessor::FourierSynthProcessor() : AudioProcessor (BusesProperties
     
     // Allocate the parameters to the pointers '[parameter]Param'
     castParameter(apvts, ParamID::gain, gainParam);
-    for(size_t i=0; i<ParamID::harmonicGains.size(); i++) 
-    castParameter(apvts, ParamID::harmonicGains.at(i), harmonicGainParams.at(i));
     
     apvts.state.addListener(this);
     
@@ -290,6 +288,7 @@ void FourierSynthProcessor::addHarmonic(){
             juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
             0.f
         ));
+
     castParameter(apvts, ParamID::harmonicGains.at(index), harmonicGainParams.at(index));
 
     getActiveEditor();
