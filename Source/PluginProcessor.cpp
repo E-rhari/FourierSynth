@@ -287,7 +287,7 @@ void FourierSynthProcessor::addHarmonic(){
     apvts.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
             ParamID::harmonicGains.at(index),
             std::format("HarmonicGain{}", index),
-            juce::NormalisableRange(0.f, 1.f, 0.001f, 1.f, false),
+            juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
             0.f
         ));
     castParameter(apvts, ParamID::harmonicGains.at(index), harmonicGainParams.at(index));

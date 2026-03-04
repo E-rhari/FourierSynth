@@ -29,8 +29,13 @@ public:
         sampleIndex += 1;
         float sampleValue = 0;
 
-        for(size_t i=0; i<harmonics.size(); i++)
+        float nyquistLimit = sampleRate/2.f;
+
+        for(size_t i=0; i<harmonics.size(); i++){
+            if((i+1)*freq > nyquistLimit)
+                break;
             sampleValue += std::sin(2*PI * sampleIndex * ((i+1)*freq / sampleRate) + phaseOffset) * harmonics.at(i);
+        }
 
         return amplitude * sampleValue;
     }
