@@ -61,6 +61,11 @@ void FourierSynthEditor::resized()
 void FourierSynthEditor::addHarmonic(){
     size_t index = harmonicGainSliders.size();
 
+    if(index >= MAX_HARMONICS){
+        Debug::log("Max amount of harmonics reached!");
+        return;
+    }
+
     harmonicGainSliders.push_back(std::make_unique<juce::Slider>());
     addAndMakeVisible(*harmonicGainSliders.at(index));
     harmonicGainSliders.at(index)->setRange(0.f, 1.f);

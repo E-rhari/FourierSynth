@@ -20,6 +20,9 @@
 #include "Debug.h"
 
 
+#define MAX_HARMONICS 100
+
+
 /** @brief Namespace for plugin parameters IDs */
 namespace ParamID {
     // Defines a model to instantiate ParaterIDs

@@ -164,6 +164,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout FourierSynthProcessor::creat
         1.0f
     ));
 
+    ParamID::populateHarmonicGainsID(MAX_HARMONICS);
+
     for(size_t i=0; i<ParamID::harmonicGains.size(); i++)
         layout.add(std::make_unique<juce::AudioParameterFloat>(
             ParamID::harmonicGains.at(i),
@@ -276,18 +278,24 @@ void FourierSynthProcessor::handleMidi(uint8_t data0, uint8_t data1, uint8_t dat
 void FourierSynthProcessor::addHarmonic(){
     size_t index = harmonicGainParams.size();
 
+    if(index >= MAX_HARMONICS){
+        Debug::log("Max amount of harmonics reached!");
+        return;
+    }
+
+
     harmonicGainParams.push_back(nullptr);
     harmonicGains_.push_back(0.f);
-    ParamID::harmonicGains.emplace_back();
+    // ParamID::harmonicGains.emplace_back();
     
-    ParamID::harmonicGains.at(index) = juce::ParameterID(std::format("harmonicGain{}", index), 1);
+    // ParamID::harmonicGains.at(index) = juce::ParameterID(std::format("harmonicGain{}", index), 1);
 
-    apvts.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
-            ParamID::harmonicGains.at(index),
-            std::format("HarmonicGain{}", index),
-            juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
-            0.f
-        ));
+    // apvts.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+    //         ParamID::harmonicGains.at(index),
+    //         std::format("HarmonicGain{}", index),
+    //         juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
+    //         0.f
+    //     ));
 
     castParameter(apvts, ParamID::harmonicGains.at(index), harmonicGainParams.at(index));
 
@@ -299,16 +307,14 @@ void FourierSynthProcessor::removeHarmonic(){
         return;
     harmonicGainParams.pop_back();
     harmonicGains_.pop_back();
-    ParamID::harmonicGains.pop_back();
-
-    // apvts.
+    // ParamID::harmonicGains.pop_back();
 }
 
 
 // * ParamID *
 
 void ParamID::populateHarmonicGainsID(size_t size){
-    ParamID::harmonicGains.resize(10);
+    ParamID::harmonicGains.resize(size);
     for(size_t i=0; i<size; i++)
         ParamID::harmonicGains.at(i) = juce::ParameterID(std::format("harmonicGain{}", i), 1);
     
