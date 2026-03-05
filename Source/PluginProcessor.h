@@ -81,6 +81,7 @@ public:
 
     float gain_;
     std::vector<float> harmonicGains_;
+    bool hasReachedMaxHarmonics;
 
     void addHarmonic();
     void removeHarmonic();

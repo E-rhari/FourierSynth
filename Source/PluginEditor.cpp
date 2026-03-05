@@ -26,9 +26,16 @@ FourierSynthEditor::FourierSynthEditor (FourierSynthProcessor& _audioProcessor, 
     removeHarmonicButton.setButtonText("-");
     addAndMakeVisible(updateButton);
     updateButton.setButtonText("Update");
+    updateButton.setVisible(false);
+
+    // Setting up warnings
+    addAndMakeVisible(harmonicMaxWarning);
+    harmonicMaxWarning.setText("You've exceeded amount of harmonics this plugin expects. To set the value for higher harmonics, press the update button. You may also experience performance issues.");
+    harmonicMaxWarning.setColour(juce::Colour(255, 255, 255));
+    harmonicMaxWarning.setJustification(juce::Justification::centredTop);
 
     // Window
-    setSize (400, 300);
+    setSize (400, 350);
 }
 
 FourierSynthEditor::~FourierSynthEditor() {}
@@ -45,26 +52,28 @@ void FourierSynthEditor::paint (juce::Graphics& g)
 void FourierSynthEditor::resized() 
 {
     float border = 30;
+    float windowWidth = getWidth();
 
-    gainSlider.setBounds (border, 220, getWidth() - 2*border, 20);
+    gainSlider.setBounds (border, 220, windowWidth - 2*border, 20);
 
-    float sliderWidth = (getWidth() - 2*border)/harmonicGainSliders.size();
+    float sliderWidth = (windowWidth - 2*border)/harmonicGainSliders.size();
     for(size_t i=0; i<harmonicGainSliders.size(); i++)
         harmonicGainSliders.at(i)->setBounds(border + sliderWidth*i, 75, sliderWidth, 100);
 
-    addHarmonicButton.setBounds(getWidth() - border - 30, 175, 30, 30);
-    removeHarmonicButton.setBounds(getWidth() - border - 2*30, 175, 30, 30);
-    updateButton.setBounds(getWidth()/2 - 30, 250, 60, 30);
+    addHarmonicButton.setBounds(windowWidth - border - 30, 175, 30, 30);
+    removeHarmonicButton.setBounds(windowWidth - border - 2*30, 175, 30, 30);
+    updateButton.setBounds(windowWidth/2 - 30, 250, 60, 30);
+
+    harmonicMaxWarning.setBounds(border, 280, windowWidth - border*2, 170);
+    harmonicMaxWarning.setBoundingBox(juce::Parallelogram<float>(juce::Rectangle<float>(border, 290, windowWidth - border*2, 150)));
+
+    updateButton.setVisible(audioProcessor.hasReachedMaxHarmonics);
+    harmonicMaxWarning.setVisible(audioProcessor.hasReachedMaxHarmonics);
 }
 
 
 void FourierSynthEditor::addHarmonic(){
     size_t index = harmonicGainSliders.size();
-
-    if(index >= MAX_HARMONICS){
-        Debug::log("Max amount of harmonics reached!");
-        return;
-    }
 
     harmonicGainSliders.push_back(std::make_unique<juce::Slider>());
     addAndMakeVisible(*harmonicGainSliders.at(index));

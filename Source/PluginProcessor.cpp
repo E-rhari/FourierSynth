@@ -11,6 +11,8 @@ FourierSynthProcessor::FourierSynthProcessor() : AudioProcessor (BusesProperties
                                                 .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
                                                 .withOutput ("Output", juce::AudioChannelSet::stereo(), true))
 {
+    hasReachedMaxHarmonics = false;
+    
     // Configure Parameters
     gain_ = 1.0f;
 
@@ -278,24 +280,23 @@ void FourierSynthProcessor::handleMidi(uint8_t data0, uint8_t data1, uint8_t dat
 void FourierSynthProcessor::addHarmonic(){
     size_t index = harmonicGainParams.size();
 
-    if(index >= MAX_HARMONICS){
-        Debug::log("Max amount of harmonics reached!");
-        return;
-    }
-
-
     harmonicGainParams.push_back(nullptr);
     harmonicGains_.push_back(0.f);
-    // ParamID::harmonicGains.emplace_back();
-    
-    // ParamID::harmonicGains.at(index) = juce::ParameterID(std::format("harmonicGain{}", index), 1);
 
-    // apvts.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
-    //         ParamID::harmonicGains.at(index),
-    //         std::format("HarmonicGain{}", index),
-    //         juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
-    //         0.f
-    //     ));
+    if(index >= MAX_HARMONICS){
+        Debug::log("Max amount of harmonics reached!");
+        hasReachedMaxHarmonics = true;
+
+        ParamID::harmonicGains.emplace_back();
+        ParamID::harmonicGains.at(index) = juce::ParameterID(std::format("harmonicGain{}", index), 1);
+
+        apvts.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+                ParamID::harmonicGains.at(index),
+                std::format("HarmonicGain{}", index),
+                juce::NormalisableRange(0.f, 1.f, 0.01f, 1.f, false),
+                0.f
+            ));
+    }
 
     castParameter(apvts, ParamID::harmonicGains.at(index), harmonicGainParams.at(index));
 
@@ -305,6 +306,9 @@ void FourierSynthProcessor::addHarmonic(){
 void FourierSynthProcessor::removeHarmonic(){
     if(harmonicGainParams.size() == 1)
         return;
+    if(harmonicGainParams.size() < MAX_HARMONICS)
+        hasReachedMaxHarmonics = false;
+
     harmonicGainParams.pop_back();
     harmonicGains_.pop_back();
     // ParamID::harmonicGains.pop_back();

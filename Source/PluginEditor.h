@@ -30,5 +30,7 @@ private:
     juce::TextButton removeHarmonicButton;
     juce::TextButton updateButton;
 
+    juce::DrawableText harmonicMaxWarning;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FourierSynthEditor)
 };
