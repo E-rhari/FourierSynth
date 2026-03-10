@@ -3,7 +3,6 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include "Debug.h"
 
 class FourierSynthEditor : public juce::AudioProcessorEditor
 {
@@ -14,12 +13,24 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
+    void addHarmonic();
+    void removeHarmonic();
+
 private:
     FourierSynthProcessor& audioProcessor;      // Reference for the processor that created this editor
     juce::AudioProcessorValueTreeState& apvts;  // Referece for the apvts of the audioprocessor. Shortcut for audioProcessor.apvts.
 
     juce::Slider gainSlider;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gainAttachment;
+
+    std::vector<std::unique_ptr<juce::Slider>> harmonicGainSliders;
+    std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>> harmonicGainAttachments;
     
+    juce::TextButton addHarmonicButton;
+    juce::TextButton removeHarmonicButton;
+    juce::TextButton updateButton;
+
+    juce::DrawableText harmonicMaxWarning;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FourierSynthEditor)
 };

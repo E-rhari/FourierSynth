@@ -13,12 +13,14 @@
 #include <atomic>
 #include <vector>
 #include <cmath>
-
-#include <chrono>
-#include <ctime>
+#include <format>
 
 #include "Preset.h"
 #include "Synth.h"
+#include "Debug.h"
+
+
+#define MAX_HARMONICS 100
 
 
 /** @brief Namespace for plugin parameters IDs */
@@ -28,11 +30,16 @@ namespace ParamID {
 
     // Initiates all parameters IDs
     PARAMETER_ID(gain)
-    PARAMETER_ID(frequency);
     
     // Undefines model so it won't be used unproperly outside the namespace
     #undef PARAMETER_ID
+
+
+    extern std::vector<juce::ParameterID> harmonicGains;
+    
+    void populateHarmonicGainsID(size_t size);
 }
+
 
 class FourierSynthProcessor : public juce::AudioProcessor, private juce::ValueTree::Listener
 {
@@ -73,8 +80,14 @@ public:
     // * Plugin specific parameters *
 
     float gain_;
-    float frequency_;
+    std::vector<float> harmonicGains_;
+    bool hasReachedMaxHarmonics;
 
+    void addHarmonic();
+    void removeHarmonic();
+
+    void update();
+    
 private:
     // * Parameter Management *
 
@@ -85,7 +98,6 @@ private:
 
     void valueTreePropertyChanged(juce::ValueTree&, const juce::Identifier&) override;
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-    void update();
     void createPrograms();
 
     template<typename T>
@@ -95,7 +107,7 @@ private:
 
     juce::LinearSmoothedValue<float> smoother;  // Parameter change smoother
     juce::AudioParameterFloat* gainParam;
-    juce::AudioParameterFloat* frequencyParam;
+    std::vector<juce::AudioParameterFloat*> harmonicGainParams;
 
     void splitBufferByEvents(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void handleMidi(uint8_t data0, uint8_t data1, uint8_t data2);

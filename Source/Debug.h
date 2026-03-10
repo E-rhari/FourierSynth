@@ -1,29 +1,35 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include <stdlib.h>
+#include <chrono>
+#include <ctime>
 
 
-class Debug
-{
+class Debug {
 public:
-    Debug(){};
-    ~Debug(){};
 
-    inline static juce::TextEditor box = juce::TextEditor();
+    static inline bool active=true;
 
-    static void log(const juce::String& string, bool showTime=true)
-    {
-        juce::String message = "";
-
-        if(showTime){
+    // Logs into the terminal that's running the host. This signature allows for some output costumization.
+    static void log(const char* string, bool printOrigin=true, bool printTime=true, bool lineBreak=true){
+        if(!active)
+            return;
+        
+        if(printTime){
             time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
             std::stringstream ss;
-            ss << std::put_time(std::localtime(&now), "%Y-%m-%d %X");
-            message += juce::String(ss.str()) + ": ";
+            ss << std::put_time(std::localtime(&now), "%X");
+            std::cerr << "[" << ss.str() + "] ";
         }
 
-        message += string;
-        Debug::box.moveCaretToEnd();
-        Debug::box.insertTextAtCaret(message + "\n");
+        if(printOrigin)
+            std::cerr << "FourierSynth: ";
+
+        std::cerr << string;
+
+        if(lineBreak)
+            std::cerr << "\n";
     }
+
 };

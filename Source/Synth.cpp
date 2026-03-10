@@ -9,9 +9,10 @@ Synth::Synth()
 }
 
 
-void Synth::allocateResources(double sampleRate_, int /*samplesPerBlock*/)
+void Synth::allocateResources(double sampleRate_, int /*samplesPerBlock*/, std::vector<float> amplitudes_)
 {
     sampleRate = sampleRate_;
+    voice.osc.setAmplitudes(amplitudes_);
 }
 
 
@@ -38,7 +39,7 @@ void Synth::render(float* outputBuffers[], int sampleCount, float gain)
 
         // double sampleValue = sin(currentAngle) * gain * (voice.velocity/127.f);
         // double sampleValue = ((rand() % 3) - 1) * gain * (voice.velocity/127.f);
-        double sampleValue = voice.render();
+        double sampleValue = voice.render() * gain;
         
         leftBuffer[sample] = sampleValue;
         if(rightBuffer != nullptr)
